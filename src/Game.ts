@@ -10,6 +10,29 @@ const newGameStr = `
   White to move
 `;
 
+export const codes = {
+  pieces: {
+    white: {
+      king: 'k'.charCodeAt(0),
+      queen: 'q'.charCodeAt(0),
+      rook: 'r'.charCodeAt(0),
+      knight: 'n'.charCodeAt(0),
+      bishop: 'b'.charCodeAt(0),
+    },
+    black: {
+      king: 'K'.charCodeAt(0),
+      queen: 'Q'.charCodeAt(0),
+      rook: 'R'.charCodeAt(0),
+      knight: 'N'.charCodeAt(0),
+      bishop: 'B'.charCodeAt(0),
+    },
+  },
+  moves: {
+    white: 'W'.charCodeAt(0),
+    black: 'B'.charCodeAt(0),
+  },
+};
+
 export const fromString = (str: string): Uint8Array => {
   const flatStr = str.replace(/\n /g, '');
   const board = new Uint8Array(65);
@@ -36,5 +59,13 @@ export const toString = (board: Uint8Array) => {
 
   return result;
 }
+
+export const findPieces = function* (board: Uint8Array, pieceCodes: Uint8Array) {
+  for (let i = 0; i !== 64; i++) {
+    if (pieceCodes.indexOf(board[i]) !== -1) {
+      yield i;
+    }
+  }
+};
 
 export const newGame = fromString(newGameStr);

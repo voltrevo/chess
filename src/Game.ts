@@ -1,14 +1,15 @@
 import { values } from './util';
 
 const newGameStr = `
-  RNBQKBNR
-  PPPPPPPP
-  ........
-  ........
-  ........
-  ........
-  pppppppp
-  rnbqkbnr
+  R N B Q K B N R
+  P P P P P P P P
+  . . . . . . . .
+  . . . . . . . .
+  . . . . . . . .
+  . . . . . . . .
+  p p p p p p p p
+  r n b q k b n r
+
   White to move
 `;
 
@@ -54,13 +55,17 @@ export const toString = (board: Uint8Array) => {
 
   for (let i = 0; i !== 8; i++) {
     for (let j = 0; j !== 8; j++) {
+      if (j !== 0) {
+        result += ' ';
+      }
+
       result += String.fromCharCode(board[8 * i + j]);
     }
 
     result += '\n';
   }
 
-  result += `${String.fromCharCode(board[64]) === 'W' ? 'White' : 'Black'} to move\n`;
+  result += `\n${String.fromCharCode(board[64]) === 'W' ? 'White' : 'Black'} to move\n`;
 
   return result;
 };

@@ -60,6 +60,9 @@ export const toString = (board: Uint8Array) => {
   return result;
 }
 
+/**
+ * E.g. findPieces(board, values(codes.pieces.white)) to get white's pieces
+ */
 export const findPieces = function* (board: Uint8Array, pieceCodes: Uint8Array) {
   for (let i = 0; i !== 64; i++) {
     if (pieceCodes.indexOf(board[i]) !== -1) {

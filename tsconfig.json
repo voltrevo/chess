@@ -4,6 +4,10 @@
     "target": "es6",
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "sourceMap": false
-  }
+    "sourceMap": false,
+    "outDir": "build"
+  },
+  "files": [
+    "src/testBoard.ts"
+  ]
 }

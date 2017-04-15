@@ -42,7 +42,7 @@ export const codes = {
 };
 
 export const fromString = (str: string): Uint8Array => {
-  const flatStr = str.replace(/\n /g, '');
+  const flatStr = str.replace(/[\n ]/g, '');
   const board = new Uint8Array(66);
 
   for (let i = 0; i !== 65; i++) {
@@ -129,7 +129,7 @@ export const toString = (board: Uint8Array) => {
     result += '\n';
   }
 
-  result += `\n${String.fromCharCode(board[64]) === 'W' ? 'White' : 'Black'} to move\n`;
+  result += `\n${String.fromCharCode(board[64]) === 'W' ? 'White' : 'Black'} to move`;
 
   return result;
 };

@@ -43,13 +43,56 @@ export const codes = {
 
 export const fromString = (str: string): Uint8Array => {
   const flatStr = str.replace(/\n /g, '');
-  const board = new Uint8Array(65);
+  const board = new Uint8Array(66);
 
   for (let i = 0; i !== 65; i++) {
     board[i] = flatStr.charCodeAt(i);
   }
 
+  // Castling flags:
+  // |      1      |      2      |      4      |      8      |
+  // | white-col-7 | white-col-7 | black-col-7 | black-col-7 |
+
+  // En passant flags:
+  // |     16      |     32      |     64      |    128      |
+  // | exists flag |     3 bit unsigned int for column       |
+
+  board[65] = 1 | 2 | 4 | 8;
+
   return board;
+};
+
+const masks = {
+  whiteCastle:  0b00000011,
+  whiteCastle0: 0b00000001,
+  whiteCastle7: 0b00000010,
+  blackCastle:  0b00001100,
+  blackCastle0: 0b00000100,
+  blackCastle7: 0b00001000,
+  enPassant:    0b00010000,
+  enPassantAll: 0b11110000,
+};
+
+const enPassantCol = (board: Uint8Array) => {
+  const flags = board[65];
+
+  if (!(flags & masks.enPassant)) {
+    return null;
+  }
+
+  return flags >> 5;
+};
+
+const setEnPassantCol = (board: Uint8Array, col: number | null) => {
+  let flags = board[65];
+  flags &= ~masks.enPassantAll;
+
+  if (col !== null) {
+    flags |= masks.enPassant;
+    flags |= col << 5;
+  }
+
+  board[65] = flags;
 };
 
 export const toString = (board: Uint8Array) => {

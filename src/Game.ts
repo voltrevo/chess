@@ -438,7 +438,7 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
 export const applyMove = (
   board: Uint8Array,
   [from, to]: [number, number],
-  promotionPreference = () => ( // TODO: use this
+  promotionPreference = () => (
     isWhite(board[from]) ?
     codes.pieces.white.queen :
     codes.pieces.black.queen
@@ -454,23 +454,30 @@ export const applyMove = (
     codes.sides.white
   );
 
-  // Clear en passant
-  flags &= ~masks.enPassantAll;
+  // Move piece
+  newBoard[from] = codes.emptySquare;
+  newBoard[to] = board[from];
 
   const piece = toWhite(board[from]);
   const pieces = codes.pieces.white;
 
-  // Set en passant if needed
-  if (
-    piece === pieces.pawn &&
-    Math.abs(from - to) === 2 * 8
-  ) {
-    flags = setEnPassantCol(flags, from % 8);
-  }
+  // Clear en passant flags
+  flags &= ~masks.enPassantAll;
 
-  // Move piece
-  newBoard[from] = codes.emptySquare;
-  newBoard[to] = board[from];
+  // Special treatment of pawns
+  if (piece === pieces.pawn) {
+    if (Math.abs(from - to) === 2 * 8) {
+      // Set en passant flags
+      flags = setEnPassantCol(flags, from % 8);
+    } else {
+      const toRow = row(to);
+
+      if (toRow === 0 || toRow === 7) {
+        // Promote pawn to piece of choice
+        newBoard[to] = promotionPreference();
+      }
+    }
+  }
 
   const [castleMasks, homeRow] = (
     board[64] === codes.sides.white ?

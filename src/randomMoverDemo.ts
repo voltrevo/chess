@@ -1,9 +1,18 @@
 (window as any).$ = require('jquery');
 const chessboardJs = require('chessboardjs');
 
-import { findMoves, toString, applyMove, newGame, isWhite, codes } from './board';
+import {
+  findMoves,
+  findPieces,
+  toString,
+  applyMove,
+  newGame,
+  isWhite,
+  codes,
+} from './board';
+
 import { pos } from './pgn';
-import { entries } from './util';
+import { entries, values } from './util';
 
 const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
   const el = document.createElement(tag);
@@ -46,6 +55,27 @@ const toChessboardJsBoardPos = (board: Uint8Array) => {
   return cjsPos;
 };
 
+const pickRandomMove = (board: Uint8Array) => {
+  const pieceCodes = (board[64] === codes.sides.white ? codes.pieces.white : codes.pieces.black);
+  const piecePositions = findPieces(board, Uint8Array.from(values(pieceCodes)));
+
+  const moves: [number, number][] = [];
+
+  for (const from of piecePositions) {
+    for (const to of findMoves(board, from)) {
+      moves.push([from, to]);
+    }
+  }
+
+  if (moves.length === 0) {
+    return null;
+  }
+
+  const randomMove = moves[Math.floor(Math.random() * moves.length)];
+
+  return randomMove;
+};
+
 window.addEventListener('load', () => {
   const boardContainer = createElement('div');
 
@@ -82,6 +112,12 @@ window.addEventListener('load', () => {
           board = applyMove(board, [fromIdx, toIdx]);
           setTimeout(() => {
             cjsBoard.position(toChessboardJsBoardPos(board), false);
+            const blackMove = pickRandomMove(board);
+
+            if (blackMove !== null) {
+              board = applyMove(board, blackMove);
+              cjsBoard.position(toChessboardJsBoardPos(board), true);
+            }
           });
           return;
         }

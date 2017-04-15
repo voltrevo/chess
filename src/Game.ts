@@ -389,6 +389,7 @@ export const findMoves = (() => {
       board[i8 + 1] === codes.emptySquare &&
       board[i8 + 2] === codes.emptySquare &&
       board[i8 + 3] === codes.emptySquare &&
+      !isKingInCheck(board, pos, isPlayerWhite) &&
       !isKingInCheck(board, i8 + 3, isPlayerWhite)
     ) {
       yield i8 + 2;
@@ -398,6 +399,7 @@ export const findMoves = (() => {
       (flags & castleMasks.castle7) &&
       board[i8 + 5] === codes.emptySquare &&
       board[i8 + 6] === codes.emptySquare &&
+      !isKingInCheck(board, pos, isPlayerWhite) &&
       !isKingInCheck(board, i8 + 6, isPlayerWhite)
     ) {
       yield i8 + 6;

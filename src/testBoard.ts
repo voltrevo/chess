@@ -9,6 +9,8 @@ import {
   applyMove
 } from './board';
 
+import { pos } from './pgn';
+
 const blockTrim = (str: string) => {
   const lines = str.split('\n');
   const nonEmptyLines = lines.filter(line => line.trim() !== '');
@@ -79,4 +81,18 @@ test('can convert games to and from strings', (t) => {
   for (const boardStr of sampleBoardStrings) {
     t.equal(toString(fromString(boardStr)), boardStr);
   }
+});
+
+test('starting moves of e2 pawn', (t) => {
+  t.plan(2);
+
+  t.equal(toString(newGame), sampleBoardStrings[0]);
+
+  const moveList = Array
+    .from(findMoves(newGame, pos.fromPgn('e2')))
+    .map(pos.toPgn)
+    .join(',')
+  ;
+
+  t.equal(moveList, 'e3,e4');
 });

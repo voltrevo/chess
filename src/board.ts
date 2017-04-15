@@ -259,8 +259,8 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
 
     const forwardMoves = (
       firstMove ?
-      [[iDirection, 0]] :
-      [[iDirection, 0], [2 * iDirection, 0]]
+      [[iDirection, 0], [2 * iDirection, 0]] :
+      [[iDirection, 0]]
     );
 
     for (const [di, dj] of forwardMoves) {
@@ -281,8 +281,12 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
       }
 
       const newPos = pos + 8 * di + dj;
+      const newPosCode = board[newPos];
 
-      if (isWhite(board[newPos]) !== isPlayerWhite || newPos === enPassantPos(board)) {
+      if (
+        (newPosCode !== codes.emptySquare && isWhite(newPosCode) !== isPlayerWhite) ||
+        newPos === enPassantPos(board)
+      ) {
         yield newPos;
       }
     }

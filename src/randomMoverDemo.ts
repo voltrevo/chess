@@ -1,7 +1,7 @@
 (window as any).$ = require('jquery');
 const chessboardJs = require('chessboardjs');
 
-import { findMoves, toString, applyMove, newGame } from './board';
+import { findMoves, toString, applyMove, newGame, isWhite, codes } from './board';
 import { pos } from './pgn';
 import { entries } from './util';
 
@@ -69,6 +69,13 @@ window.addEventListener('load', () => {
     onDrop: (from: string, to: string) => {
       const fromIdx = pos.fromPgn(from);
       const toIdx = pos.fromPgn(to);
+
+      const isWhiteTurn = (board[64] === codes.sides.white);
+      const isWhitePiece = isWhite(board[fromIdx]);
+
+      if (isWhiteTurn !== isWhitePiece) {
+        return 'snapback';
+      }
 
       for (const legalToIdx of findMoves(board, fromIdx)) {
         if (toIdx === legalToIdx) {

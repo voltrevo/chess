@@ -457,9 +457,12 @@ export const applyMove = (
   // Clear en passant
   flags &= ~masks.enPassantAll;
 
+  const piece = toWhite(board[from]);
+  const pieces = codes.pieces.white;
+
   // Set en passant if needed
   if (
-    toWhite(board[from]) === codes.pieces.white.pawn &&
+    piece === pieces.pawn &&
     Math.abs(from - to) === 2 * 8
   ) {
     flags = setEnPassantCol(flags, from % 8);
@@ -474,9 +477,6 @@ export const applyMove = (
     [masks.castle.white, 7] :
     [masks.castle.black, 0]
   );
-
-  const piece = toWhite(board[from]);
-  const pieces = codes.pieces.white;
 
   // Castling flags
   if (piece === pieces.king) {

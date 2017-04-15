@@ -156,6 +156,38 @@ test('moves of d4 queen', (t) => {
   t.equal(moveList, 'a4,a7,b4,b6,c3,c4,c5,d3,d5,d6,d7,e3,e4,e5,f4,f6,g4,g7,h4');
 });
 
+test('pawn can capture', (t) => {
+  t.plan(1);
+
+  let board: Uint8Array | null = fromString(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . P . . . .
+    . . . . p . . .
+    . . . . . . . .
+    p p p p . p p p
+    r n b q k b n r
+
+    White to move
+  `);
+
+  board = checkedApplyMove(board, ['e4', 'd5']);
+
+  t.equal(board && toString(board), blockTrim(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . p . . . .
+    . . . . . . . .
+    . . . . . . . .
+    p p p p . p p p
+    r n b q k b n r
+
+    Black to move
+  `));
+});
+
 test('en passant', (t) => {
   t.plan(2);
 

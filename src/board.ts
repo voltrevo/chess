@@ -429,8 +429,19 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
 
     const moves = moveGen(board, pos, isPlayerWhite);
 
+    const kingPiece = (
+      isPlayerWhite ?
+      codes.pieces.white.king :
+      codes.pieces.black.king
+    );
+
+    let kingPos: number | null = null;
+    for (const foundKingPos of findPieces(board, Uint8Array.from([kingPiece]))) {
+      kingPos = foundKingPos;
+    }
+
     for (const move of moves) {
-      if (!isKingInCheck(board, pos, isPlayerWhite)) {
+      if (kingPos === null || !isKingInCheck(board, kingPos, isPlayerWhite)) {
         yield move;
       }
     }

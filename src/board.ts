@@ -189,8 +189,9 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
 
       if (isWhite(newPosCode) !== isPlayerWhite) {
         yield newPos;
-        return;
       }
+
+      return;
     }
   };
 

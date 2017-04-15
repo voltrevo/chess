@@ -330,3 +330,24 @@ test('knight can capture', (t) => {
     Black to move
   `));
 });
+
+test('rooks can\'t jump over pieces', (t) => {
+  t.plan(1);
+
+  let board: Uint8Array | null = fromString(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    p p p p p p p p
+    r n b q k b n r
+
+    White to move
+  `);
+
+  board = checkedApplyMove(board, ['h1', 'h3']);
+
+  t.equal(board && toString(board), null);
+});

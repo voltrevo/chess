@@ -5,12 +5,13 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "sourceMap": false,
-    "outDir": "build"
+    "outDir": "build/js"
   },
   "files": [
+    "src/randomMoverDemo.ts",
     "src/testBoard.ts"
   ],
   "outFiles": [
-    "build/**/*.js"
+    "build/js/**/*.js"
   ]
 }

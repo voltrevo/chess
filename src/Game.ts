@@ -63,12 +63,18 @@ export const fromString = (str: string): Uint8Array => {
 };
 
 const masks = {
-  whiteCastle:  0b00000011,
-  whiteCastle0: 0b00000001,
-  whiteCastle7: 0b00000010,
-  blackCastle:  0b00001100,
-  blackCastle0: 0b00000100,
-  blackCastle7: 0b00001000,
+  castle: {
+    white: {
+      castle:   0b00000011,
+      castle0:  0b00000001,
+      castle7:  0b00000010,
+    },
+    black: {
+      castle:   0b00001100,
+      castle0:  0b00000100,
+      castle7:  0b00001000,
+    },
+  },
   enPassant:    0b00010000,
   enPassantAll: 0b11110000,
 };
@@ -143,6 +149,8 @@ export const findPieces = function*(board: Uint8Array, pieceCodes: Uint8Array) {
 };
 
 export const findMoves = (() => {
+  // TODO: Prevent moves that remain in check, or move into check
+
   const isOnBoard = (pos: number) => 0 <= pos && pos < 64;
   const row = (pos: number) => Math.floor(pos / 8);
 
@@ -182,6 +190,39 @@ export const findMoves = (() => {
           yield newPos;
         }
       }
+    }
+
+    const flags = board[65];
+
+    const castleMasks = (
+      isPlayerWhite ?
+      masks.castle.white :
+      masks.castle.black
+    );
+
+    if (!(flags & castleMasks.castle)) {
+      return;
+    }
+
+    const i8 = 8 * row(pos);
+
+    // TODO: Prevent castling over check
+
+    if (
+      (flags & castleMasks.castle0) &&
+      board[i8 + 1] === codes.emptySquare &&
+      board[i8 + 2] === codes.emptySquare &&
+      board[i8 + 3] === codes.emptySquare
+    ) {
+      yield i8 + 2;
+    }
+
+    if (
+      (flags & castleMasks.castle7) &&
+      board[i8 + 5] === codes.emptySquare &&
+      board[i8 + 6] === codes.emptySquare
+    ) {
+      yield i8 + 6;
     }
   };
 

@@ -95,6 +95,22 @@ const setEnPassantCol = (board: Uint8Array, col: number | null) => {
   board[65] = flags;
 };
 
+const enPassantPos = (board: Uint8Array) => {
+  const col = enPassantCol(board);
+
+  if (col === null) {
+    return null;
+  }
+
+  const row = (
+    board[64] === codes.sides.white ?
+    2 : // If white's turn, en passant row is one ahead of black's pawn row
+    5   // If black's turn, en passant row is one ahead of white's pawn row
+  );
+
+  return 8 * row + col;
+};
+
 export const toString = (board: Uint8Array) => {
   let result = '';
 
@@ -288,7 +304,7 @@ export const findMoves = (() => {
 
       const newPos = pos + 8 * di + dj;
 
-      if (isWhite(board[newPos]) !== isPlayerWhite) {
+      if (isWhite(board[newPos]) !== isPlayerWhite || newPos === enPassantPos(board)) {
         yield newPos;
       }
     }
@@ -321,7 +337,6 @@ export const findMoves = (() => {
         return bishopMoves(board, pos);
 
       case pieces.pawn:
-        // TODO: En passant
         return pawnMoves(board, pos);
     }
 

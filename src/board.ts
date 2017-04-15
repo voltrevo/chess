@@ -240,7 +240,7 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
 
         if (
           newPosCode === codes.emptySquare ||
-          isWhite(newPosCode) === isPlayerWhite
+          isWhite(newPosCode) !== isPlayerWhite
         ) {
           yield newPos;
         }

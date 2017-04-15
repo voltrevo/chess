@@ -202,3 +202,35 @@ test('en passant', (t) => {
     White to move
   `));
 });
+
+test('black queen side castle', (t) => {
+  t.plan(1);
+
+  let board: Uint8Array | null = fromString(`
+    R . . . K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    p p p p p p p p
+    r n b q k b n r
+
+    Black to move
+  `);
+
+  board = checkedApplyMove(board, ['e8', 'c8']);
+
+  t.equal(board && toString(board), blockTrim(`
+    . . K R . B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    p p p p p p p p
+    r n b q k b n r
+
+    White to move
+  `));
+});

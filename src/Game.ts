@@ -485,12 +485,26 @@ export const applyMove = (
     [masks.castle.black, 0]
   );
 
-  // Castling flags
+  // Special treatment of kings
   if (piece === pieces.king) {
     // Clear castling flags
     flags &= ~castleMasks.castle;
-  } else if (piece === pieces.rook && row(from) === homeRow) {
-    // Clear white castle flag on side
+
+    // Move rook if actually castling
+    if (Math.abs(from - to) === 2) {
+      const rookCol = (to % 8 === 2 ? 0 : 7);
+      const rookFrom = 8 * homeRow + rookCol;
+      const rookTo = (from + to) / 2;
+
+      const rook = board[rookFrom];
+      newBoard[rookFrom] = codes.emptySquare;
+      newBoard[rookTo] = rook;
+    }
+  }
+
+  // Special treatment of rooks
+  if (piece === pieces.rook && row(from) === homeRow) {
+    // Clear castle flag on side
     const col = from % 8;
 
     if (col === 0) {
@@ -498,17 +512,6 @@ export const applyMove = (
     } else if (col === 7) {
       flags &= ~castleMasks.castle7;
     }
-  }
-
-  // Move rook if actually castling
-  if (piece === pieces.king && Math.abs(from - to) === 2) {
-    const rookCol = (to % 8 === 2 ? 0 : 7);
-    const rookFrom = 8 * homeRow + rookCol;
-    const rookTo = (from + to) / 2;
-
-    const rook = board[rookFrom];
-    newBoard[rookFrom] = codes.emptySquare;
-    newBoard[rookTo] = rook;
   }
 
   newBoard[65] = flags;

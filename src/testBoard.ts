@@ -6,10 +6,28 @@ import {
   fromString,
   toString,
   findMoves,
-  applyMove
+  applyMove,
+  codes,
 } from './board';
 
 import { pos } from './pgn';
+
+const checkedApplyMove = (
+  board: Uint8Array,
+  [from, to]: [string, string],
+  promotionPreference?: () => number
+) => {
+  const isMoveLegal = Array
+    .from(findMoves(board, pos.fromPgn(from)))
+    .some(legalTo => pos.toPgn(legalTo) === to)
+  ;
+
+  if (!isMoveLegal) {
+    return null;
+  }
+
+  return applyMove(board, [pos.fromPgn(from), pos.fromPgn(to)], promotionPreference);
+}
 
 const blockTrim = (str: string) => {
   const lines = str.split('\n');
@@ -95,4 +113,41 @@ test('starting moves of e2 pawn', (t) => {
   ;
 
   t.equal(moveList, 'e3,e4');
+});
+
+test('moves of d4 queen', (t) => {
+  t.plan(1);
+
+  const board = fromString(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . q . . . .
+    . . . . . . . .
+    p p p p p p p p
+    r n b q k b n r
+
+    White to move
+  `);
+
+  // 8 | R N B Q K B N R
+  // 7 | * P P * P P * P
+  // 6 | . * . * . * . .
+  // 5 | . . * * * . . .
+  // 4 | * * * q * * * *
+  // 3 | . . * * * . . .
+  // 2 | p p p p p p p p
+  // 1 | r n b q k b n r
+  //   \----------------
+  //     a b c d e f g h
+
+  const moveList = Array
+    .from(findMoves(board, pos.fromPgn('d4')))
+    .map(pos.toPgn)
+    .sort()
+    .join(',')
+  ;
+
+  t.equal(moveList, 'a4,a7,b4,b6,c3,c4,c5,d3,d5,d6,d7,e3,e4,e5,f4,f6,g4,g7,h4');
 });

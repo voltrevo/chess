@@ -1,7 +1,7 @@
 (window as any).$ = require('jquery');
 const chessboardJs = require('chessboardjs');
 
-import { findMoves, applyMove, newGame } from './board';
+import { findMoves, toString, applyMove, newGame } from './board';
 import { pos } from './pgn';
 import { entries } from './util';
 
@@ -13,6 +13,37 @@ const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
   }
 
   return el;
+};
+
+const toChessboardJsBoardPos = (board: Uint8Array) => {
+  const flatStr = toString(board).replace(/[\n ]/g, '');
+
+  const pieceMap: { [key: string]: string | undefined } = {
+    k: 'wK',
+    q: 'wQ',
+    b: 'wB',
+    n: 'wN',
+    r: 'wR',
+    p: 'wP',
+    K: 'bK',
+    Q: 'bQ',
+    B: 'bB',
+    N: 'bN',
+    R: 'bR',
+    P: 'bP',
+  };
+
+  const cjsPos: { [square: string]: string } = {};
+
+  for (let i = 0; i !== 64; i++) {
+    const mappedPiece = pieceMap[flatStr[i]];
+
+    if (mappedPiece !== undefined) {
+      cjsPos[pos.toPgn(i)] = mappedPiece;
+    }
+  }
+
+  return cjsPos;
 };
 
 window.addEventListener('load', () => {
@@ -30,9 +61,10 @@ window.addEventListener('load', () => {
   document.body.appendChild(boardContainer);
 
   let board = newGame;
+  let cjsPos = toChessboardJsBoardPos(board);
 
-  chessboardJs(boardContainer, {
-    position: 'start',
+  const cjsBoard = chessboardJs(boardContainer, {
+    position: cjsPos,
     draggable: true,
     onDrop: (from: string, to: string) => {
       const fromIdx = pos.fromPgn(from);
@@ -41,6 +73,9 @@ window.addEventListener('load', () => {
       for (const legalToIdx of findMoves(board, fromIdx)) {
         if (toIdx === legalToIdx) {
           board = applyMove(board, [fromIdx, toIdx]);
+          setTimeout(() => {
+            cjsBoard.position(toChessboardJsBoardPos(board), false);
+          });
           return;
         }
       }

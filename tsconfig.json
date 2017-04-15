@@ -9,5 +9,8 @@
   },
   "files": [
     "src/testBoard.ts"
+  ],
+  "outFiles": [
+    "build/**/*.js"
   ]
 }

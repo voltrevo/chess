@@ -1,6 +1,8 @@
 (window as any).$ = require('jquery');
 const chessboardJs = require('chessboardjs');
 
+import { findMoves, applyMove, newGame } from './board';
+import { pos } from './pgn';
 import { entries } from './util';
 
 const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
@@ -27,5 +29,23 @@ window.addEventListener('load', () => {
 
   document.body.appendChild(boardContainer);
 
-  chessboardJs(boardContainer, 'start');
+  let board = newGame;
+
+  chessboardJs(boardContainer, {
+    position: 'start',
+    draggable: true,
+    onDrop: (from: string, to: string) => {
+      const fromIdx = pos.fromPgn(from);
+      const toIdx = pos.fromPgn(to);
+
+      for (const legalToIdx of findMoves(board, fromIdx)) {
+        if (toIdx === legalToIdx) {
+          board = applyMove(board, [fromIdx, toIdx]);
+          return;
+        }
+      }
+
+      return 'snapback';
+    },
+  });
 });

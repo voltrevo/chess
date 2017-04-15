@@ -470,9 +470,20 @@ export const applyMove = (
 
   // Special treatment of pawns
   if (piece === pieces.pawn) {
-    if (Math.abs(from - to) === 2 * 8) {
-      // Set en passant flags
+    const dist = Math.abs(from - to);
+
+    if (dist === 2 * 8) {
+      // Set en passant flags - makes en passant available to opponent
       flags = setEnPassantCol(flags, from % 8);
+    } else if ((
+      (dist === 8 - 1 || dist === 8 + 1) && // Diagonal move
+      board[to] === codes.emptySquare       // Destination empty
+    )) {
+      // En passant occurred - need to remove opponent pawn
+      const opponentPawnRow = row(from);
+      const opponentPawnCol = to % 8;
+      const opponentPawnPos = 8 * opponentPawnRow + opponentPawnCol;
+      newBoard[opponentPawnPos] = codes.emptySquare;
     } else {
       const toRow = row(to);
 

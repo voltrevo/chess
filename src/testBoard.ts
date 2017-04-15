@@ -13,10 +13,14 @@ import {
 import { pos } from './pgn';
 
 const checkedApplyMove = (
-  board: Uint8Array,
+  board: Uint8Array | null,
   [from, to]: [string, string],
   promotionPreference?: () => number
 ) => {
+  if (board === null) {
+    return null;
+  }
+
   const isMoveLegal = Array
     .from(findMoves(board, pos.fromPgn(from)))
     .some(legalTo => pos.toPgn(legalTo) === to)
@@ -150,4 +154,51 @@ test('moves of d4 queen', (t) => {
   ;
 
   t.equal(moveList, 'a4,a7,b4,b6,c3,c4,c5,d3,d5,d6,d7,e3,e4,e5,f4,f6,g4,g7,h4');
+});
+
+test('en passant', (t) => {
+  t.plan(2);
+
+  let board: Uint8Array | null = fromString(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . P . . . .
+    . . . . . . . .
+    p p p p p p p p
+    r n b q k b n r
+
+    White to move
+  `);
+
+  board = checkedApplyMove(board, ['e2', 'e4']);
+
+  t.equal(board && toString(board), blockTrim(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . P p . . .
+    . . . . . . . .
+    p p p p . p p p
+    r n b q k b n r
+
+    Black to move
+  `));
+
+  board = checkedApplyMove(board, ['d4', 'e3']);
+
+  t.equal(board && toString(board), blockTrim(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . P . . .
+    p p p p . p p p
+    r n b q k b n r
+
+    White to move
+  `));
 });

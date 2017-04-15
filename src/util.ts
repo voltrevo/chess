@@ -15,3 +15,5 @@ export const mapIter = function*<X, Y>(iter: IterableIterator<X>, fn: (x: X) => 
 };
 
 export const values = <T>(obj: { [key: string]: T }) => mapIter(entries(obj), ([, v]) => v);
+
+export const emptyIter = function*<T>(): IterableIterator<T> { return; };

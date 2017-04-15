@@ -1,4 +1,6 @@
-import { values } from './util';
+import * as assert from 'assert';
+
+import { emptyIter, values } from './util';
 
 const newGameStr = `
   R N B Q K B N R
@@ -118,7 +120,7 @@ export const findMoves = (() => {
           newPosCode === codes.emptySquare ||
           isWhite(newPosCode) !== isPlayerWhite
         ) {
-          yield [pos, newPos];
+          yield newPos;
         }
       }
     }
@@ -140,12 +142,12 @@ export const findMoves = (() => {
       const newPosCode = board[newPos];
 
       if (newPosCode === codes.emptySquare) {
-        yield [pos, newPos];
+        yield newPos;
         continue;
       }
 
       if (isWhite(newPosCode) !== isWhite(board[pos])) {
-        yield [pos, newPos];
+        yield newPos;
         return;
       }
     }
@@ -201,7 +203,7 @@ export const findMoves = (() => {
           newPosCode === codes.emptySquare ||
           isWhite(newPosCode) === isPlayerWhite
         ) {
-          yield [di, dj];
+          yield newPos;
         }
       }
     };
@@ -232,7 +234,7 @@ export const findMoves = (() => {
       const newPos = pos + 8 * di + dj;
 
       if (board[newPos] === codes.emptySquare) {
-        yield [di, dj];
+        yield newPos;
       }
     }
 
@@ -244,7 +246,7 @@ export const findMoves = (() => {
       const newPos = pos + 8 * di + dj;
 
       if (isWhite(board[newPos]) !== isPlayerWhite) {
-        yield [di, dj];
+        yield newPos;
       }
     }
   };
@@ -253,7 +255,7 @@ export const findMoves = (() => {
     const pieceCode = board[pos];
 
     if (pieceCode === '.'.charCodeAt(0)) {
-      return;
+      return emptyIter<number>();
     }
 
     const pieces = codes.pieces.white;
@@ -279,6 +281,9 @@ export const findMoves = (() => {
         // TODO: En passant, promotion
         return pawnMoves(board, pos);
     }
+
+    assert(false);
+    return emptyIter<number>();
   };
 })();
 

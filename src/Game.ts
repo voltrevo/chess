@@ -321,7 +321,7 @@ export const findMoves = (() => {
         return bishopMoves(board, pos);
 
       case pieces.pawn:
-        // TODO: En passant, promotion
+        // TODO: En passant
         return pawnMoves(board, pos);
     }
 

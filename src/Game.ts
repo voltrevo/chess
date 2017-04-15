@@ -89,16 +89,13 @@ const enPassantCol = (board: Uint8Array) => {
   return flags >> 5;
 };
 
-const setEnPassantCol = (board: Uint8Array, col: number | null) => {
-  let flags = board[65];
+const setEnPassantCol = (flags: number, col: number) => {
   flags &= ~masks.enPassantAll;
 
-  if (col !== null) {
-    flags |= masks.enPassant;
-    flags |= col << 5;
-  }
+  flags |= masks.enPassant;
+  flags |= col << 5;
 
-  board[65] = flags;
+  return flags;
 };
 
 const enPassantPos = (board: Uint8Array) => {
@@ -148,7 +145,7 @@ export const findPieces = function*(board: Uint8Array, pieceCodes: Uint8Array) {
   }
 };
 
-export const findMoves = (() => {
+export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
   const isOnBoard = (pos: number) => 0 <= pos && pos < 64;
   const row = (pos: number) => Math.floor(pos / 8);
 
@@ -406,7 +403,7 @@ export const findMoves = (() => {
     }
   };
 
-  return function*(board: Uint8Array, pos: number) {
+  const findMoves = function*(board: Uint8Array, pos: number) {
     const pieceCode = board[pos];
 
     if (pieceCode === '.'.charCodeAt(0)) {
@@ -434,6 +431,82 @@ export const findMoves = (() => {
       }
     }
   };
+
+  return { findMoves, isKingInCheck, isWhite, toWhite, row };
 })();
+
+export const applyMove = (
+  board: Uint8Array,
+  [from, to]: [number, number],
+  promotionPreference = () => ( // TODO: use this
+    isWhite(board[from]) ?
+    codes.pieces.white.queen :
+    codes.pieces.black.queen
+  )
+) => {
+  const newBoard = Uint8Array.from(board);
+  let flags = board[65];
+
+  // Update who's turn it is
+  newBoard[64] = (
+    board[64] === codes.sides.white ?
+    codes.sides.black :
+    codes.sides.white
+  );
+
+  // Clear en passant
+  flags &= ~masks.enPassantAll;
+
+  // Set en passant if needed
+  if (
+    toWhite(board[from]) === codes.pieces.white.pawn &&
+    Math.abs(from - to) === 2 * 8
+  ) {
+    flags = setEnPassantCol(flags, from % 8);
+  }
+
+  // Move piece
+  newBoard[from] = codes.emptySquare;
+  newBoard[to] = board[from];
+
+  const [castleMasks, homeRow] = (
+    board[64] === codes.sides.white ?
+    [masks.castle.white, 7] :
+    [masks.castle.black, 0]
+  );
+
+  const piece = toWhite(board[from]);
+  const pieces = codes.pieces.white;
+
+  // Castling flags
+  if (piece === pieces.king) {
+    // Clear castling flags
+    flags &= ~castleMasks.castle;
+  } else if (piece === pieces.rook && row(from) === homeRow) {
+    // Clear white castle flag on side
+    const col = from % 8;
+
+    if (col === 0) {
+      flags &= ~castleMasks.castle0;
+    } else if (col === 7) {
+      flags &= ~castleMasks.castle7;
+    }
+  }
+
+  // Move rook if actually castling
+  if (piece === pieces.king && Math.abs(from - to) === 2) {
+    const rookCol = (to % 8 === 2 ? 0 : 7);
+    const rookFrom = 8 * homeRow + rookCol;
+    const rookTo = (from + to) / 2;
+
+    const rook = board[rookFrom];
+    newBoard[rookFrom] = codes.emptySquare;
+    newBoard[rookTo] = rook;
+  }
+
+  newBoard[65] = flags;
+
+  return newBoard;
+};
 
 export const newGame = fromString(newGameStr);

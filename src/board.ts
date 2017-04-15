@@ -436,13 +436,16 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
       codes.pieces.black.king
     );
 
-    let kingPos: number | null = null;
-    for (const foundKingPos of findPieces(board, Uint8Array.from([kingPiece]))) {
-      kingPos = foundKingPos;
-    }
-
     for (const move of moves) {
-      if (kingPos === null || !isKingInCheck(board, kingPos, isPlayerWhite)) {
+      // PERF: Should return this so it doesn't need recalculating after, or find a way around it
+      const newBoard = applyMove(board, [pos, move]);
+
+      let kingPos: number | null = null;
+      for (const foundKingPos of findPieces(newBoard, Uint8Array.from([kingPiece]))) {
+        kingPos = foundKingPos;
+      }
+
+      if (kingPos === null || !isKingInCheck(newBoard, kingPos, isPlayerWhite)) {
         yield move;
       }
     }

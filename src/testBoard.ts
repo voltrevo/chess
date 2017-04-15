@@ -351,3 +351,35 @@ test('rooks can\'t jump over pieces', (t) => {
 
   t.equal(board && toString(board), null);
 });
+
+test('king can move out of check', (t) => {
+  t.plan(1);
+
+  let board: Uint8Array | null = fromString(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . Q . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    p p p p . p p p
+    r n b . k b n r
+
+    White to move
+  `);
+
+  board = checkedApplyMove(board, ['e1', 'd1']);
+
+  t.equal(board && toString(board), blockTrim(`
+    R N B Q K B N R
+    P P P P P P P P
+    . . . . Q . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    p p p p . p p p
+    r n b k . b n r
+
+    Black to move
+  `));
+});

@@ -149,8 +149,6 @@ export const findPieces = function*(board: Uint8Array, pieceCodes: Uint8Array) {
 };
 
 export const findMoves = (() => {
-  // TODO: Prevent moves that remain in check, or move into check
-
   const isOnBoard = (pos: number) => 0 <= pos && pos < 64;
   const row = (pos: number) => Math.floor(pos / 8);
 
@@ -167,66 +165,12 @@ export const findMoves = (() => {
   const diff = 'a'.charCodeAt(0) - 'A'.charCodeAt(0);
   const toWhite = (code: number) => !isWhite(code) ? code + diff : code;
 
-  const kingMoves = function*(board: Uint8Array, pos: number) {
-    const isPlayerWhite = isWhite(board[pos]);
-
-    for (const di of [-1, 0, 1]) {
-      for (const dj of [-1, 0, 1]) {
-        if (di === 0 && dj === 0) {
-          continue;
-        }
-
-        if (!isMoveOnBoard(pos, [di, dj])) {
-          continue;
-        }
-
-        const newPos = pos + 8 * di + dj;
-        const newPosCode = board[newPos];
-
-        if (
-          newPosCode === codes.emptySquare ||
-          isWhite(newPosCode) !== isPlayerWhite
-        ) {
-          yield newPos;
-        }
-      }
-    }
-
-    const flags = board[65];
-
-    const castleMasks = (
-      isPlayerWhite ?
-      masks.castle.white :
-      masks.castle.black
-    );
-
-    if (!(flags & castleMasks.castle)) {
-      return;
-    }
-
-    const i8 = 8 * row(pos);
-
-    // TODO: Prevent castling over check
-
-    if (
-      (flags & castleMasks.castle0) &&
-      board[i8 + 1] === codes.emptySquare &&
-      board[i8 + 2] === codes.emptySquare &&
-      board[i8 + 3] === codes.emptySquare
-    ) {
-      yield i8 + 2;
-    }
-
-    if (
-      (flags & castleMasks.castle7) &&
-      board[i8 + 5] === codes.emptySquare &&
-      board[i8 + 6] === codes.emptySquare
-    ) {
-      yield i8 + 6;
-    }
-  };
-
-  const travelMoves = function*(board: Uint8Array, pos: number, [di, dj]: [number, number]) {
+  const travelMoves = function*(
+    board: Uint8Array,
+    pos: number,
+    [di, dj]: [number, number],
+    isPlayerWhite: boolean,
+  ) {
     if (di === 0 && dj === 0) {
       return;
     }
@@ -246,32 +190,32 @@ export const findMoves = (() => {
         continue;
       }
 
-      if (isWhite(newPosCode) !== isWhite(board[pos])) {
+      if (isWhite(newPosCode) !== isPlayerWhite) {
         yield newPos;
         return;
       }
     }
   };
 
-  const rookMoves = function*(board: Uint8Array, pos: number) {
+  const rookMoves = function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
     for (const unitMove of [[0, 1], [0, -1], [1, 0], [-1, 0]] as [number, number][]) {
-      for (const move of travelMoves(board, pos, unitMove)) {
+      for (const move of travelMoves(board, pos, unitMove, isPlayerWhite)) {
         yield move;
       }
     }
   };
 
-  const bishopMoves = function*(board: Uint8Array, pos: number) {
+  const bishopMoves = function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
     for (const unitMove of [[-1, -1], [-1, 1], [1, -1], [1, 1]] as [number, number][]) {
-      for (const move of travelMoves(board, pos, unitMove)) {
+      for (const move of travelMoves(board, pos, unitMove, isPlayerWhite)) {
         yield move;
       }
     }
   };
 
-  const queenMoves = function*(board: Uint8Array, pos: number) {
+  const queenMoves = function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
     for (const moveSet of [rookMoves, bishopMoves]) {
-      for (const move of moveSet(board, pos)) {
+      for (const move of moveSet(board, pos, isPlayerWhite)) {
         yield move;
       }
     }
@@ -288,9 +232,7 @@ export const findMoves = (() => {
       }
     }
 
-    return function*(board: Uint8Array, pos: number) {
-      const isPlayerWhite = isWhite(board[pos]);
-
+    return function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
       for (const [di, dj] of moveSet) {
         if (!isMoveOnBoard(pos, [di, dj])) {
           continue;
@@ -309,9 +251,7 @@ export const findMoves = (() => {
     };
   })();
 
-  const pawnMoves = function*(board: Uint8Array, pos: number) {
-    const isPlayerWhite = isWhite(board[pos]);
-
+  const pawnMoves = function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
     const firstMove = (
       isPlayerWhite ?
       row(pos) === 6 :
@@ -351,38 +291,146 @@ export const findMoves = (() => {
     }
   };
 
-  return function(board: Uint8Array, pos: number) {
+  const plainKingMoves = function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
+    for (const di of [-1, 0, 1]) {
+      for (const dj of [-1, 0, 1]) {
+        if (di === 0 && dj === 0) {
+          continue;
+        }
+
+        if (!isMoveOnBoard(pos, [di, dj])) {
+          continue;
+        }
+
+        const newPos = pos + 8 * di + dj;
+        const newPosCode = board[newPos];
+
+        if (
+          newPosCode === codes.emptySquare ||
+          isWhite(newPosCode) !== isPlayerWhite
+        ) {
+          yield newPos;
+        }
+      }
+    }
+  };
+
+  const isKingInCheck = (board: Uint8Array, pos: number, isPlayerWhite: boolean) => {
+    const opponentPieces = (
+      isPlayerWhite ?
+      codes.pieces.black :
+      codes.pieces.white
+    );
+
+    for (const otherPos of plainKingMoves(board, pos, isPlayerWhite)) {
+      if (board[otherPos] === opponentPieces.king) {
+        return true;
+      }
+    }
+
+    for (const otherPos of knightMoves(board, pos, isPlayerWhite)) {
+      if (board[otherPos] === opponentPieces.knight) {
+        return true;
+      }
+    }
+
+    const i = row(pos);
+    const j = pos % 8;
+    const opponentPawnRow = (isPlayerWhite ? i - 1 : i + 1);
+
+    for (const opponentPawnCol of [j - 1, j + 1]) {
+      if (opponentPawnCol < 0 || opponentPawnCol > 7) {
+        continue;
+      }
+
+      if (board[8 * opponentPawnRow + opponentPawnCol] === opponentPieces.pawn) {
+        return true;
+      }
+    }
+
+    for (const otherPos of rookMoves(board, pos, isPlayerWhite)) {
+      const code = board[otherPos];
+      if (code === opponentPieces.rook || code === opponentPieces.queen) {
+        return true;
+      }
+    }
+
+    for (const otherPos of bishopMoves(board, pos, isPlayerWhite)) {
+      const code = board[otherPos];
+      if (code === opponentPieces.bishop || code === opponentPieces.queen) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const kingMoves = function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
+    for (const move of plainKingMoves(board, pos, isPlayerWhite)) {
+      yield move;
+    }
+
+    const flags = board[65];
+
+    const castleMasks = (
+      isPlayerWhite ?
+      masks.castle.white :
+      masks.castle.black
+    );
+
+    if (!(flags & castleMasks.castle)) {
+      return;
+    }
+
+    const i8 = 8 * row(pos);
+
+    if (
+      (flags & castleMasks.castle0) &&
+      board[i8 + 1] === codes.emptySquare &&
+      board[i8 + 2] === codes.emptySquare &&
+      board[i8 + 3] === codes.emptySquare &&
+      !isKingInCheck(board, i8 + 3, isPlayerWhite)
+    ) {
+      yield i8 + 2;
+    }
+
+    if (
+      (flags & castleMasks.castle7) &&
+      board[i8 + 5] === codes.emptySquare &&
+      board[i8 + 6] === codes.emptySquare &&
+      !isKingInCheck(board, i8 + 6, isPlayerWhite)
+    ) {
+      yield i8 + 6;
+    }
+  };
+
+  return function*(board: Uint8Array, pos: number) {
     const pieceCode = board[pos];
 
     if (pieceCode === '.'.charCodeAt(0)) {
-      return emptyIter<number>();
+      return;
     }
+
+    const isPlayerWhite = isWhite(pieceCode);
 
     const pieces = codes.pieces.white;
 
-    switch (toWhite(pieceCode)) {
-      case pieces.king:
-        // TODO: castling
-        return kingMoves(board, pos);
+    const moveGen = {
+      [pieces.king]: kingMoves,
+      [pieces.queen]: queenMoves,
+      [pieces.rook]: rookMoves,
+      [pieces.knight]: knightMoves,
+      [pieces.bishop]: bishopMoves,
+      [pieces.pawn]: pawnMoves,
+    }[toWhite(pieceCode)];
 
-      case pieces.queen:
-        return queenMoves(board, pos);
+    const moves = moveGen(board, pos, isPlayerWhite);
 
-      case pieces.rook:
-        return rookMoves(board, pos);
-
-      case pieces.knight:
-        return knightMoves(board, pos);
-
-      case pieces.bishop:
-        return bishopMoves(board, pos);
-
-      case pieces.pawn:
-        return pawnMoves(board, pos);
+    for (const move of moves) {
+      if (!isKingInCheck(board, pos, isPlayerWhite)) {
+        yield move;
+      }
     }
-
-    assert(false);
-    return emptyIter<number>();
   };
 })();
 

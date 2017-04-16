@@ -112,7 +112,8 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
         ) as [null, number];
       }
 
-      return moveAndRatings.reduce((a: MoveAndRating, b: MoveAndRating) => a[1] >= b[1] ? a : b)
+      const [move, rating] = moveAndRatings.reduce((a: MoveAndRating, b: MoveAndRating) => a[1] >= b[1] ? a : b);
+      return [move, ratingMultiplier * rating];
     })
   ;
 };

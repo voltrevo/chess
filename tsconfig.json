@@ -9,7 +9,8 @@
   },
   "files": [
     "src/basicDemo.ts",
-    "src/testBoard.ts"
+    "src/testBoard.ts",
+    "src/testPickMoveByRating.ts"
   ],
   "outFiles": [
     "build/js/**/*.js"

@@ -78,7 +78,7 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
   return moveAndRatingsPromise
     .then((moveAndRatings: MoveAndRating[]) => {
       // TODO: If no moves found, check for stalemate
-      return moveAndRatings.reduce((a: MoveAndRating, b: MoveAndRating) => a[1] > b[1] ? a : b)
+      return moveAndRatings.reduce((a: MoveAndRating, b: MoveAndRating) => a[1] >= b[1] ? a : b)
     })
   ;
 };

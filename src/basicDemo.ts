@@ -12,11 +12,13 @@ import {
 } from './board';
 
 import { pos } from './pgn';
-import { applyDepth, pickMoveByRating } from './pickMoveByRating';
+import { applyDepth, applyDepthPromise, applyPromise, pickMoveByRatingPromise } from './pickMoveByRating';
 import { rateBoard } from './rateBoard';
 import { entries, values } from './util';
 
-const rateBoardWithDepth = applyDepth(rateBoard, 2);
+const rateBoardShallowSync = applyDepth(rateBoard, 1);
+const rateBoardShallowAsync = applyPromise(rateBoardShallowSync);
+const rateBoardDeep = applyDepthPromise(rateBoardShallowAsync, 1);
 
 const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
   const el = document.createElement(tag);
@@ -116,12 +118,13 @@ window.addEventListener('load', () => {
           board = applyMove(board, [fromIdx, toIdx]);
           setTimeout(() => {
             cjsBoard.position(toChessboardJsBoardPos(board), false);
-            const blackMove = pickMoveByRating(board, rateBoardWithDepth);
 
-            if (blackMove !== null) {
-              board = applyMove(board, blackMove);
-              cjsBoard.position(toChessboardJsBoardPos(board), true);
-            }
+            pickMoveByRatingPromise(board, rateBoardDeep).then(blackMove => {
+              if (blackMove !== null) {
+                board = applyMove(board, blackMove);
+                cjsBoard.position(toChessboardJsBoardPos(board), true);
+              }
+            });
           });
           return;
         }

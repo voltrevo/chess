@@ -11,14 +11,25 @@ import {
   codes,
 } from './board';
 
+import { headToHead } from './headToHead';
 import { pos } from './pgn';
-import { applyDepth, applyDepthPromise, applyPromise, pickMoveByRatingPromise } from './pickMoveByRating';
+
+import {
+  applyDepth,
+  applyDepthPromise,
+  applyPromise,
+  determineEndState,
+  pickMoveByRatingPromise
+} from './pickMoveByRating';
+
 import { rateBoard } from './rateBoard';
 import { entries, values } from './util';
 
 const rateBoardShallowSync = applyDepth(rateBoard, 1);
 const rateBoardShallowAsync = applyPromise(rateBoardShallowSync);
-const rateBoardDeep = applyDepthPromise(rateBoardShallowAsync, 1);
+const rateBoardDeep = applyDepthPromise(rateBoardShallowAsync, 0);
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const applyStyles = (el: HTMLElement, styles: { [key: string]: string }) => {
   for (const [key, val] of entries(styles)) {
@@ -128,7 +139,11 @@ window.addEventListener('load', () => {
     },
   });
 
-  (() => {
+  const trial: () => Promise<boolean> = () => {
+    board = newGame;
+    cjsBoard.position(toChessboardJsBoardPos(board), false);
+    let moves = 0;
+
     const computerMove = () => pickMoveByRatingPromise(board, rateBoardDeep).then(move => {
       if (move !== null) {
         board = applyMove(board, move);
@@ -139,14 +154,33 @@ window.addEventListener('load', () => {
       return { gameOver: true };
     });
 
-    const loop: () => void = () => computerMove().then(({ gameOver }) => {
+    const loop: () => Promise<boolean> = () => computerMove().then(({ gameOver }) => {
+      moves++;
+
+      if (moves > 500) {
+        console.log('Restarting due to >500 moves');
+        return trial();
+      }
+
       if (!gameOver) {
         return loop();
       }
+
+      if (determineEndState(board) === 'stalemate') {
+        return trial();
+      }
+
+      // If it's checkmate and black's turn, then white won
+      return board[64] === codes.sides.black;
     });
 
-    loop();
-  })();
+    return loop();
+  };
+
+  headToHead(
+    trial,
+    update => console.log(update)
+  );
 
   const updateSize = () => {
     const windowSize = Math.min(window.innerHeight, window.innerWidth);

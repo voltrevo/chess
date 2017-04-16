@@ -1,7 +1,7 @@
 import { applyMove, codes, findMoves, findPieces, isKingInCheck } from './board';
 import { values } from './util';
 
-const determineEndState = (board: Uint8Array) => {
+export const determineEndState = (board: Uint8Array) => {
   const isPlayerWhite = (board[64] === codes.sides.white);
 
   const kingPosArray = Array.from(findPieces(

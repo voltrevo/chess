@@ -128,6 +128,26 @@ window.addEventListener('load', () => {
     },
   });
 
+  (() => {
+    const computerMove = () => pickMoveByRatingPromise(board, rateBoardDeep).then(move => {
+      if (move !== null) {
+        board = applyMove(board, move);
+        cjsBoard.position(toChessboardJsBoardPos(board), true);
+        return { gameOver: false };
+      }
+
+      return { gameOver: true };
+    });
+
+    const loop: () => void = () => computerMove().then(({ gameOver }) => {
+      if (!gameOver) {
+        return loop();
+      }
+    });
+
+    loop();
+  })();
+
   const updateSize = () => {
     const windowSize = Math.min(window.innerHeight, window.innerWidth);
 

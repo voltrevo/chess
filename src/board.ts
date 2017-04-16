@@ -271,6 +271,13 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
 
       const newPos = pos + 8 * di + dj;
 
+      if (
+        di === 2 * iDirection &&
+        board[pos + 8 * iDirection + dj] !== codes.emptySquare
+      ) {
+        continue;
+      }
+
       if (board[newPos] === codes.emptySquare) {
         yield newPos;
       }

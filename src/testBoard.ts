@@ -404,3 +404,24 @@ test('can\'t castle over check', (t) => {
 
   t.equal(board && toString(board), null);
 });
+
+test('pawns can\'t jump over pieces on first move', (t) => {
+  t.plan(1);
+
+  let board: Uint8Array | null = fromString(`
+    R N B Q K B N R
+    P P P P P P n P
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . n . . .
+    p p p p p p p p
+    r n b q k b n r
+
+    White to move
+  `);
+
+  board = checkedApplyMove(board, ['e2', 'e4']);
+
+  t.equal(board && toString(board), null);
+});

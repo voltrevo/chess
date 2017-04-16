@@ -383,3 +383,24 @@ test('king can move out of check', (t) => {
     Black to move
   `));
 });
+
+test('can\'t castle over check', (t) => {
+  t.plan(1);
+
+  let board: Uint8Array | null = fromString(`
+    R N . Q K B N R
+    P P P . . P P P
+    . . . . . . . .
+    . . . P P . . .
+    . . . . . . . .
+    . . . . . n p B
+    p p p p p p . p
+    r n b q k . . r
+
+    White to move
+  `);
+
+  board = checkedApplyMove(board, ['e1', 'g1']);
+
+  t.equal(board && toString(board), null);
+});

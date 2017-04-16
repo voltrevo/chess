@@ -402,7 +402,7 @@ export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
       board[i8 + 5] === codes.emptySquare &&
       board[i8 + 6] === codes.emptySquare &&
       !isKingInCheck(board, pos, isPlayerWhite) &&
-      !isKingInCheck(board, i8 + 6, isPlayerWhite)
+      !isKingInCheck(board, i8 + 5, isPlayerWhite)
     ) {
       yield i8 + 6;
     }

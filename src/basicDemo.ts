@@ -85,15 +85,6 @@ const pickRandomMove = (board: Uint8Array) => {
 window.addEventListener('load', () => {
   const boardContainer = createElement('div');
 
-  const updateSize = () => {
-    const windowSize = Math.min(window.innerHeight, window.innerWidth);
-    boardContainer.style.width = `${0.9 * windowSize}px`;
-    boardContainer.style.height = `${0.9 * windowSize}px`;
-  };
-
-  updateSize();
-  window.addEventListener('resize', updateSize);
-
   document.body.appendChild(boardContainer);
 
   let board = newGame;
@@ -133,4 +124,14 @@ window.addEventListener('load', () => {
       return 'snapback';
     },
   });
+
+  const updateSize = () => {
+    const windowSize = Math.min(window.innerHeight, window.innerWidth);
+    boardContainer.style.width = `${0.9 * windowSize}px`;
+    boardContainer.style.height = `${0.9 * windowSize}px`;
+    cjsBoard.resize();
+  };
+
+  updateSize();
+  window.addEventListener('resize', updateSize);
 });

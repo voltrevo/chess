@@ -8,7 +8,7 @@
     "outDir": "build/js"
   },
   "files": [
-    "src/randomMoverDemo.ts",
+    "src/basicDemo.ts",
     "src/testBoard.ts"
   ],
   "outFiles": [

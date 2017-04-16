@@ -12,6 +12,7 @@ import {
 } from './board';
 
 import { pos } from './pgn';
+import { pickMoveByRating } from './pickMoveByRating';
 import { entries, values } from './util';
 
 const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
@@ -112,7 +113,7 @@ window.addEventListener('load', () => {
           board = applyMove(board, [fromIdx, toIdx]);
           setTimeout(() => {
             cjsBoard.position(toChessboardJsBoardPos(board), false);
-            const blackMove = pickRandomMove(board);
+            const blackMove = pickMoveByRating(board);
 
             if (blackMove !== null) {
               board = applyMove(board, blackMove);

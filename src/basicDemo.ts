@@ -20,12 +20,15 @@ const rateBoardShallowSync = applyDepth(rateBoard, 1);
 const rateBoardShallowAsync = applyPromise(rateBoardShallowSync);
 const rateBoardDeep = applyDepthPromise(rateBoardShallowAsync, 1);
 
-const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
-  const el = document.createElement(tag);
-
+const applyStyles = (el: HTMLElement, styles: { [key: string]: string }) => {
   for (const [key, val] of entries(styles)) {
     (el.style as any)[key] = val;
   }
+};
+
+const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
+  const el = document.createElement(tag);
+  applyStyles(el, styles);
 
   return el;
 };
@@ -127,8 +130,17 @@ window.addEventListener('load', () => {
 
   const updateSize = () => {
     const windowSize = Math.min(window.innerHeight, window.innerWidth);
-    boardContainer.style.width = `${0.9 * windowSize}px`;
-    boardContainer.style.height = `${0.9 * windowSize}px`;
+
+    const padding = 10;
+
+    applyStyles(boardContainer, {
+      position: 'fixed',
+      left: `${(window.innerWidth - windowSize) / 2 + padding}px`,
+      top: `${(window.innerHeight - windowSize) / 2 + padding}px`,
+      width: `${windowSize - 2 * padding}px`,
+      height: `${windowSize - 2 * padding}px`,
+    });
+
     cjsBoard.resize();
   };
 

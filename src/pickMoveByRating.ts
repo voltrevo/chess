@@ -112,7 +112,24 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
         ) as [null, number];
       }
 
-      const [move, rating] = moveAndRatings.reduce((a: MoveAndRating, b: MoveAndRating) => a[1] >= b[1] ? a : b);
+      type ReduceState = [([number, number] | null)[], number];
+
+      const [moves, rating] = moveAndRatings.reduce((state: ReduceState, el: MoveAndRating) => {
+        if (state[1] > el[1]) {
+          return state;
+        }
+
+        if (state[1] === el[1]) {
+          state[0].push(el[0]);
+          return state;
+        }
+
+        return [[el[0]], el[1]];
+      }, [[], -Infinity] as ReduceState) as ReduceState;
+
+      // TODO: Inject rng
+      const move = moves[Math.floor(Math.random() * moves.length)];
+
       return [move, ratingMultiplier * rating] as MoveAndRating;
     })
   ;

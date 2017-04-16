@@ -1,5 +1,24 @@
-import { applyMove, codes, findMoves, findPieces } from './board';
+import { applyMove, codes, findMoves, findPieces, isKingInCheck } from './board';
 import { values } from './util';
+
+const determineEndState = (board: Uint8Array) => {
+  const isPlayerWhite = (board[64] === codes.sides.white);
+
+  const kingPosArray = Array.from(findPieces(
+    board,
+    Uint8Array.from(
+      isPlayerWhite ?
+      [codes.pieces.white.king] :
+      [codes.pieces.black.king]
+    )
+  ));
+
+  if (kingPosArray.length === 0 || isKingInCheck(board, kingPosArray[0], isPlayerWhite)) {
+    return 'checkmate';
+  }
+
+  return 'stalemate';
+};
 
 const findAllMoves: (board: Uint8Array) => IterableIterator<[number, number]> = function*(board: Uint8Array) {
   const pieceCodes = values(board[64] === codes.sides.white ? codes.pieces.white : codes.pieces.black);
@@ -15,7 +34,9 @@ const findBestMoveAndRating = (board: Uint8Array, rate: (board: Uint8Array) => n
   let bestMove: [number, number] | null = null;
   let bestRating = -Infinity;
 
-  const ratingMultiplier = (board[64] === codes.sides.white) ? 1 : -1;
+  const isPlayerWhite = (board[64] === codes.sides.white);
+
+  const ratingMultiplier = isPlayerWhite ? 1 : -1;
 
   for (const move of findAllMoves(board)) {
     const rating = ratingMultiplier * rate(applyMove(board, move));
@@ -26,7 +47,13 @@ const findBestMoveAndRating = (board: Uint8Array, rate: (board: Uint8Array) => n
     }
   }
 
-  // TODO: If no moves found, check for stalemate
+  if (bestMove === null) {
+    return (
+      determineEndState(board) === 'checkmate' ?
+      [null, ratingMultiplier * -Infinity] :
+      [null, 1]
+    ) as [null, number];
+  }
 
   return [bestMove, ratingMultiplier * bestRating] as [[number, number] | null, number];
 };
@@ -77,7 +104,14 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
 
   return moveAndRatingsPromise
     .then((moveAndRatings: MoveAndRating[]) => {
-      // TODO: If no moves found, check for stalemate
+      if (moveAndRatings.length === 0) {
+        return (
+          determineEndState(board) === 'checkmate' ?
+          [null, ratingMultiplier * -Infinity] :
+          [null, 1]
+        ) as [null, number];
+      }
+
       return moveAndRatings.reduce((a: MoveAndRating, b: MoveAndRating) => a[1] >= b[1] ? a : b)
     })
   ;

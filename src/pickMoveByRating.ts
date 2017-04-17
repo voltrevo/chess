@@ -84,7 +84,7 @@ export const applyPromise:
   );
 };
 
-const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Array) => Promise<number>) => {
+const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Array) => Promise<number>, rand: number = 0) => {
   let bestMove: [number, number] | null = null;
   let bestRating = -Infinity;
 
@@ -128,7 +128,7 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
       }, [[], -Infinity] as ReduceState) as ReduceState;
 
       // TODO: Inject rng
-      const move = moves[Math.floor(Math.random() * moves.length)];
+      const move = moves[Math.floor(rand * moves.length)];
 
       return [move, ratingMultiplier * rating] as MoveAndRating;
     })
@@ -149,6 +149,6 @@ export const applyDepthPromise:
     .then(moveAndRating => moveAndRating[1]);
 };
 
-export const pickMoveByRatingPromise = (board: Uint8Array, rateBoard: (board: Uint8Array) => Promise<number>) => {
-  return findBestMoveAndRatingPromise(board, rateBoard).then(moveAndRating => moveAndRating[0]);
+export const pickMoveByRatingPromise = (board: Uint8Array, rateBoard: (board: Uint8Array) => Promise<number>, rand: number) => {
+  return findBestMoveAndRatingPromise(board, rateBoard, rand).then(moveAndRating => moveAndRating[0]);
 };

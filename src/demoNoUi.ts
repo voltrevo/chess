@@ -119,9 +119,11 @@ const pickRandomMove = (board: Uint8Array) => {
       };
 
       if (!differenceFound && rater !== rateBoardDeep) {
+        const rand = Math.random();
+
         return Promise.all([
-          pickMoveByRatingPromise(board, rater),
-          pickMoveByRatingPromise(board, rateBoardDeep)
+          pickMoveByRatingPromise(board, rater, rand),
+          pickMoveByRatingPromise(board, rateBoardDeep, rand)
         ]).then(([move, testMove]) => {
           if (move === null) {
             return null;
@@ -141,7 +143,7 @@ const pickRandomMove = (board: Uint8Array) => {
         }).then(handleMove);
       }
 
-      return pickMoveByRatingPromise(board, getRater()).then(handleMove);
+      return pickMoveByRatingPromise(board, getRater(), Math.random()).then(handleMove);
     };
 
     const loop: () => Promise<boolean> = () => computerMove().then(({ gameOver }) => {

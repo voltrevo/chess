@@ -35,10 +35,8 @@ const rateBoardDeep = applyDeep(rateBoard);
 const rateBoardChallengerDeep = applyDeep(rateBoardChallenger);
 
 (() => {
-  let board = newGame;
-
   const trial: () => Promise<boolean> = () => {
-    board = newGame;
+    let board = newGame;
     let moves = 0;
 
     // TODO: Better side alternation (should be A-B-B-A-A-B-B-...)

@@ -1,28 +1,14 @@
-import {
-  findMoves,
-  findPieces,
-  toString,
-  applyMove,
-  newGame,
-  isWhite,
-  codes,
-} from './board';
-
 import { headToHead } from './headToHead';
-import { pos } from './pgn';
 
 import {
   applyDepth,
   applyDepthPromise,
-  applyPromise,
-  determineEndState,
-  pickMoveByRatingPromise
+  applyPromise
 } from './pickMoveByRating';
 
 import { rateBoard } from './rateBoard';
 import { rateBoardChallenger } from './rateBoardChallenger';
 import { runChessGame } from './runChessGame';
-import { entries, values } from './util';
 
 const applyDeep = (rate: (board: Uint8Array) => number) => {
   const rateShallowSync = applyDepth(rate, 1);

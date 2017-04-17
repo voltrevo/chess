@@ -29,7 +29,7 @@ import { entries, values } from './util';
 const applyDeep = (rate: (board: Uint8Array) => number) => {
   const rateShallowSync = applyDepth(rate, 1);
   const rateShallowAsync = applyPromise(rateShallowSync);
-  const rateDeep = applyDepthPromise(rateShallowAsync, 0);
+  const rateDeep = applyDepthPromise(rateShallowAsync, 1);
 
   return rateDeep;
 }
@@ -140,7 +140,7 @@ window.addEventListener('load', () => {
           setTimeout(() => {
             cjsBoard.position(toChessboardJsBoardPos(board), false);
 
-            pickMoveByRatingPromise(board, rateBoardDeep).then(blackMove => {
+            pickMoveByRatingPromise(board, rateBoardDeep, Math.random()).then(blackMove => {
               if (blackMove !== null) {
                 board = applyMove(board, blackMove);
                 cjsBoard.position(toChessboardJsBoardPos(board), true);
@@ -166,7 +166,7 @@ window.addEventListener('load', () => {
       return (board[64] === challengerSide ? rateBoardChallengerDeep : rateBoardDeep);
     };
 
-    const computerMove = () => pickMoveByRatingPromise(board, getRater()).then(move => {
+    const computerMove = () => pickMoveByRatingPromise(board, getRater(), Math.random()).then(move => {
       if (move !== null) {
         board = applyMove(board, move);
         cjsBoard.position(toChessboardJsBoardPos(board), true);
@@ -201,16 +201,16 @@ window.addEventListener('load', () => {
 
   const startTime = Date.now();
 
-  headToHead(
-    trial,
-    update => statsDisplay.textContent = JSON.stringify({
-      wins: update.wins,
-      losses: update.losses,
-      score: `${(100 * update.score).toFixed(1)}%`,
-      confidence: `${(100 * update.confidence).toFixed(1)}%`,
-      time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
-    }, null, 2),
-  );
+  // headToHead(
+  //   trial,
+  //   update => statsDisplay.textContent = JSON.stringify({
+  //     wins: update.wins,
+  //     losses: update.losses,
+  //     score: `${(100 * update.score).toFixed(1)}%`,
+  //     confidence: `${(100 * update.confidence).toFixed(1)}%`,
+  //     time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
+  //   }, null, 2),
+  // );
 
   const updateSize = () => {
     const windowSize = Math.min(window.innerHeight, window.innerWidth);

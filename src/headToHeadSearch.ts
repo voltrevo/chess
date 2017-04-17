@@ -1,6 +1,20 @@
 import { scoreAndConfidence } from './scoreAndConfidence';
 
-type UpdateType = {};
+type ChallengerType<ParamSet, ParamVector> = {
+  vector: ParamVector,
+  params: ParamSet,
+  wins: number,
+  losses: number
+};
+
+type UpdateType<ParamSet, ParamVector> = {
+  championParams: ParamSet,
+  challengerPool: ChallengerType<ParamSet, ParamVector>[],
+  testCount: number,
+  challengerCount: number,
+  acceptCount: number,
+  min: string,
+};
 
 const range = (n: number) => (new Array(n)).fill(0).map((x, i) => i);
 
@@ -12,14 +26,12 @@ export const headToHeadSearch = <ParamSet, ParamVector>(
   acceptThreshold: number,
   rejectThreshold: number,
   poolSize: number,
-  updateHandler: (updates: UpdateType) => void
+  updateHandler: (updates: UpdateType<ParamSet, ParamVector>) => void
 ) => {
-  type ChallengerType = { vector: ParamVector, params: ParamSet, wins: number, losses: number };
-
   let challengerCount = 0;
   let acceptCount = 0;
 
-  const createChallenger: () => ChallengerType = () => {
+  const createChallenger: () => ChallengerType<ParamSet, ParamVector> = () => {
     const vector = generateMutationVector();
     const params = applyMutationVector(championParams, vector);
     challengerCount++;
@@ -29,16 +41,16 @@ export const headToHeadSearch = <ParamSet, ParamVector>(
 
   let challengerPool = range(poolSize).map(createChallenger);
 
-  const challengerPoolWithSc = () => challengerPool
-    .map(challenger => ({ challenger, sc: scoreAndConfidence(challenger.wins, challenger.losses) }))
+  const challengerPoolWithSc = (winBoost: number) => challengerPool
+    .map(challenger => ({ challenger, sc: scoreAndConfidence(challenger.wins + winBoost, challenger.losses) }))
   ;
 
-  const pickChallenger = () => challengerPoolWithSc()
+  const pickChallenger = () => challengerPoolWithSc(1)
     .reduce((a, b) => (a.sc.confidence > b.sc.confidence ? a : b))
     .challenger
   ;
 
-  const replaceChampion = (challenger: ChallengerType) => {
+  const replaceChampion = (challenger: ChallengerType<ParamSet, ParamVector>) => {
     // Set new champion
     championParams = challenger.params;
 
@@ -80,8 +92,11 @@ export const headToHeadSearch = <ParamSet, ParamVector>(
   };
 
   const churnPool = () => {
-    challengerPool = challengerPoolWithSc()
-      .filter(({ sc }) => sc.confidence > rejectThreshold)
+    challengerPool = challengerPoolWithSc(1)
+      .filter(({ challenger, sc }) => (
+        challenger.wins + challenger.losses === 0 ||
+        sc.confidence > rejectThreshold
+      ))
       .map(({ challenger }) => challenger)
     ;
 
@@ -90,7 +105,7 @@ export const headToHeadSearch = <ParamSet, ParamVector>(
     }
   };
 
-  const startTime = 0;
+  const startTime = Date.now();
 
   const triggerUpdate = () => updateHandler({
     championParams,
@@ -98,7 +113,7 @@ export const headToHeadSearch = <ParamSet, ParamVector>(
     testCount,
     challengerCount,
     acceptCount,
-    min: `${(Date.now() - startTime) / 60000}min`,
+    min: `${((Date.now() - startTime) / 60000).toFixed(1)}min`,
   });
 
   const loop: () => Promise<void> = () => runTest()

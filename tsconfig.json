@@ -11,7 +11,7 @@
     "src/basicDemo.ts",
     "src/demoNoUi.ts",
     "src/testBoard.ts",
-    "src/headToHeadSearch.ts"
+    "src/runHeadToHeadSearch.ts"
   ],
   "outFiles": [
     "build/js/**/*.js"

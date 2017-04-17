@@ -41,10 +41,6 @@ const rateBoardChallengerDeep = applyDeep(rateBoardChallenger);
     board = newGame;
     let moves = 0;
 
-    // TODO: Never going to find games without differences unless the same random numbers
-    // are used
-    let differenceFound = false;
-
     // TODO: Better side alternation (should be A-B-B-A-A-B-B-...)
     const challengerSide = (Math.random() < 0.5 ? codes.sides.white : codes.sides.black);
     const getRater = () => {
@@ -54,41 +50,14 @@ const rateBoardChallengerDeep = applyDeep(rateBoardChallenger);
     const computerMove = () => {
       const rater = getRater();
 
-      const handleMove = (move: [number, number] | null) => {
+      return pickMoveByRatingPromise(board, getRater(), Math.random()).then((move) => {
         if (move !== null) {
           board = applyMove(board, move);
           return { gameOver: false };
         }
 
         return { gameOver: true };
-      };
-
-      if (!differenceFound && rater !== rateBoardDeep) {
-        const rand = Math.random();
-
-        return Promise.all([
-          pickMoveByRatingPromise(board, rater, rand),
-          pickMoveByRatingPromise(board, rateBoardDeep, rand)
-        ]).then(([move, testMove]) => {
-          if (move === null) {
-            return null;
-          }
-
-          if (testMove === null) {
-            throw new Error('one ai says there are moves, the other does not');
-          }
-
-          if (move[0] !== testMove[0] || move[1] !== testMove[1]) {
-            if (!differenceFound) {
-              differenceFound = true;
-            }
-          }
-
-          return move;
-        }).then(handleMove);
-      }
-
-      return pickMoveByRatingPromise(board, getRater(), Math.random()).then(handleMove);
+      });
     };
 
     const loop: () => Promise<boolean> = () => computerMove().then(({ gameOver }) => {
@@ -104,11 +73,6 @@ const rateBoardChallengerDeep = applyDeep(rateBoardChallenger);
       }
 
       if (determineEndState(board) === 'stalemate') {
-        return trial();
-      }
-
-      if (!differenceFound) {
-        console.log('No difference found, not counting this game');
         return trial();
       }
 

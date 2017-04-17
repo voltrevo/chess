@@ -1,6 +1,3 @@
-(window as any).$ = require('jquery');
-const chessboardJs = require('chessboardjs');
-
 import {
   findMoves,
   findPieces,
@@ -26,31 +23,18 @@ import { rateBoard } from './rateBoard';
 import { rateBoardChallenger } from './rateBoardChallenger';
 import { entries, values } from './util';
 
-const applyDeep = (rate: (board: Uint8Array) => number) => {
+const applyDeep = (rate: (board: Uint8Array) => number, extraDepth = 0) => {
   const rateShallowSync = applyDepth(rate, 1);
   const rateShallowAsync = applyPromise(rateShallowSync);
-  const rateDeep = applyDepthPromise(rateShallowAsync, 0);
+  const rateDeep = applyDepthPromise(rateShallowAsync, extraDepth);
 
   return rateDeep;
 }
 
 const rateBoardDeep = applyDeep(rateBoard);
-const rateBoardChallengerDeep = applyDeep(rateBoardChallenger);
+const rateBoardChallengerDeep = applyDeep(rateBoardChallenger, 1);
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const applyStyles = (el: HTMLElement, styles: { [key: string]: string }) => {
-  for (const [key, val] of entries(styles)) {
-    (el.style as any)[key] = val;
-  }
-};
-
-const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
-  const el = document.createElement(tag);
-  applyStyles(el, styles);
-
-  return el;
-};
 
 const toChessboardJsBoardPos = (board: Uint8Array) => {
   const flatStr = toString(board).replace(/[\n ]/g, '');
@@ -104,61 +88,17 @@ const pickRandomMove = (board: Uint8Array) => {
   return randomMove;
 };
 
-window.addEventListener('load', () => {
-  const boardContainer = createElement('div');
-  const statsDisplay = createElement('pre', {
-    position: 'fixed',
-    right: '10px',
-    bottom: '10px',
-    border: '1px solid black',
-    backgroundColor: '#aff',
-  });
-
-  document.body.appendChild(boardContainer);
-  document.body.appendChild(statsDisplay);
-
+(() => {
   let board = newGame;
   let cjsPos = toChessboardJsBoardPos(board);
 
-  const cjsBoard = chessboardJs(boardContainer, {
-    position: cjsPos,
-    draggable: true,
-    onDrop: (from: string, to: string) => {
-      const fromIdx = pos.fromPgn(from);
-      const toIdx = pos.fromPgn(to);
-
-      const isWhiteTurn = (board[64] === codes.sides.white);
-      const isWhitePiece = isWhite(board[fromIdx]);
-
-      if (isWhiteTurn !== isWhitePiece) {
-        return 'snapback';
-      }
-
-      for (const legalToIdx of findMoves(board, fromIdx)) {
-        if (toIdx === legalToIdx) {
-          board = applyMove(board, [fromIdx, toIdx]);
-          setTimeout(() => {
-            cjsBoard.position(toChessboardJsBoardPos(board), false);
-
-            pickMoveByRatingPromise(board, rateBoardDeep).then(blackMove => {
-              if (blackMove !== null) {
-                board = applyMove(board, blackMove);
-                cjsBoard.position(toChessboardJsBoardPos(board), true);
-              }
-            });
-          });
-          return;
-        }
-      }
-
-      return 'snapback';
-    },
-  });
-
   const trial: () => Promise<boolean> = () => {
     board = newGame;
-    cjsBoard.position(toChessboardJsBoardPos(board), false);
     let moves = 0;
+
+    // TODO: Never going to find games without differences unless the same random numbers
+    // are used
+    let differenceFound = false;
 
     // TODO: Better side alternation (should be A-B-B-A-A-B-B-...)
     const challengerSide = (Math.random() < 0.5 ? codes.sides.white : codes.sides.black);
@@ -166,15 +106,43 @@ window.addEventListener('load', () => {
       return (board[64] === challengerSide ? rateBoardChallengerDeep : rateBoardDeep);
     };
 
-    const computerMove = () => pickMoveByRatingPromise(board, getRater()).then(move => {
-      if (move !== null) {
-        board = applyMove(board, move);
-        cjsBoard.position(toChessboardJsBoardPos(board), true);
-        return { gameOver: false };
+    const computerMove = () => {
+      const rater = getRater();
+
+      const handleMove = (move: [number, number] | null) => {
+        if (move !== null) {
+          board = applyMove(board, move);
+          return { gameOver: false };
+        }
+
+        return { gameOver: true };
+      };
+
+      if (!differenceFound && rater !== rateBoardDeep) {
+        return Promise.all([
+          pickMoveByRatingPromise(board, rater),
+          pickMoveByRatingPromise(board, rateBoardDeep)
+        ]).then(([move, testMove]) => {
+          if (move === null) {
+            return null;
+          }
+
+          if (testMove === null) {
+            throw new Error('one ai says there are moves, the other does not');
+          }
+
+          if (move[0] !== testMove[0] || move[1] !== testMove[1]) {
+            if (!differenceFound) {
+              differenceFound = true;
+            }
+          }
+
+          return move;
+        }).then(handleMove);
       }
 
-      return { gameOver: true };
-    });
+      return pickMoveByRatingPromise(board, getRater()).then(handleMove);
+    };
 
     const loop: () => Promise<boolean> = () => computerMove().then(({ gameOver }) => {
       moves++;
@@ -192,6 +160,11 @@ window.addEventListener('load', () => {
         return trial();
       }
 
+      if (!differenceFound) {
+        console.log('No difference found, not counting this game');
+        return trial();
+      }
+
       // If it's checkmate and non-challenger turn, then challenger won
       return board[64] !== challengerSide;
     });
@@ -203,31 +176,12 @@ window.addEventListener('load', () => {
 
   headToHead(
     trial,
-    update => statsDisplay.textContent = JSON.stringify({
+    update => console.log(JSON.stringify({
       wins: update.wins,
       losses: update.losses,
       score: `${(100 * update.score).toFixed(1)}%`,
       confidence: `${(100 * update.confidence).toFixed(1)}%`,
       time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
-    }, null, 2),
-  );
-
-  const updateSize = () => {
-    const windowSize = Math.min(window.innerHeight, window.innerWidth);
-
-    const padding = 10;
-
-    applyStyles(boardContainer, {
-      position: 'fixed',
-      left: `${(window.innerWidth - windowSize) / 2 + padding}px`,
-      top: `${(window.innerHeight - windowSize) / 2 + padding}px`,
-      width: `${windowSize - 2 * padding}px`,
-      height: `${windowSize - 2 * padding}px`,
-    });
-
-    cjsBoard.resize();
-  };
-
-  updateSize();
-  window.addEventListener('resize', updateSize);
-});
+    })),
+  ).catch(err => console.error(err));
+})();

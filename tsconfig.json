@@ -9,6 +9,7 @@
   },
   "files": [
     "src/basicDemo.ts",
+    "src/demoNoUi.ts",
     "src/testBoard.ts",
     "src/testPickMoveByRating.ts"
   ],

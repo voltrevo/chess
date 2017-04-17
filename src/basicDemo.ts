@@ -11,6 +11,8 @@ import {
   codes,
 } from './board';
 
+import { BoardRater, BoardRaterParams } from './BoardRater';
+
 import { headToHead } from './headToHead';
 import { pos } from './pgn';
 
@@ -22,9 +24,21 @@ import {
   pickMoveByRatingPromise
 } from './pickMoveByRating';
 
-import { rateBoard } from './rateBoard';
-import { rateBoardChallenger } from './rateBoardChallenger';
 import { entries, values } from './util';
+
+const params: BoardRaterParams = [
+  3.5,   // bishopVal
+  3.5,   // knightVal
+  5,     // rookVal
+  9,     // queenVal
+  1.1,   // centerBoost
+  0.005, // pieceAdvancementBoost
+  1.5,   // pawnNearPromotionBoost
+];
+
+// Just use the same params right now
+const rateBoard = BoardRater(params);
+const rateBoardChallenger = BoardRater(params);
 
 const applyDeep = (rate: (board: Uint8Array) => number) => {
   const rateShallowSync = applyDepth(rate, 1);
@@ -201,16 +215,16 @@ window.addEventListener('load', () => {
 
   const startTime = Date.now();
 
-  // headToHead(
-  //   trial,
-  //   update => statsDisplay.textContent = JSON.stringify({
-  //     wins: update.wins,
-  //     losses: update.losses,
-  //     score: `${(100 * update.score).toFixed(1)}%`,
-  //     confidence: `${(100 * update.confidence).toFixed(1)}%`,
-  //     time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
-  //   }, null, 2),
-  // );
+  headToHead(
+    trial,
+    update => statsDisplay.textContent = JSON.stringify({
+      wins: update.wins,
+      losses: update.losses,
+      score: `${(100 * update.score).toFixed(1)}%`,
+      confidence: `${(100 * update.confidence).toFixed(1)}%`,
+      time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
+    }, null, 2),
+  );
 
   const updateSize = () => {
     const windowSize = Math.min(window.innerHeight, window.innerWidth);

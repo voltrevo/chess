@@ -12,7 +12,7 @@ import {
 } from './board';
 
 import { BoardRater, BoardRaterParams } from './BoardRater';
-
+import { championParams } from './championParams';
 import { headToHead } from './headToHead';
 import { pos } from './pgn';
 
@@ -26,19 +26,9 @@ import {
 
 import { entries, values } from './util';
 
-const params: BoardRaterParams = [
-  3.5,   // bishopVal
-  3.5,   // knightVal
-  5,     // rookVal
-  9,     // queenVal
-  1.1,   // centerBoost
-  0.005, // pieceAdvancementBoost
-  1.5,   // pawnNearPromotionBoost
-];
-
 // Just use the same params right now
-const rateBoard = BoardRater(params);
-const rateBoardChallenger = BoardRater(params);
+const rateBoard = BoardRater(championParams);
+const rateBoardChallenger = BoardRater(championParams);
 
 const applyDeep = (rate: (board: Uint8Array) => number) => {
   const rateShallowSync = applyDepth(rate, 1);

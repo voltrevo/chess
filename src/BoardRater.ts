@@ -10,19 +10,19 @@ export const BoardRater = ([
   centerBoost,
   pieceAdvancementBoost,
   pawnNearPromotionBoost,
-]: [number, number, number, number, number, number, number]) => {
+]: BoardRaterParams) => {
   const material = {
     [codes.pieces.white.king]: Infinity,
-    [codes.pieces.white.queen]: 9,
-    [codes.pieces.white.rook]: 5,
-    [codes.pieces.white.knight]: 3.5,
-    [codes.pieces.white.bishop]: 3.5,
+    [codes.pieces.white.queen]: queenVal,
+    [codes.pieces.white.rook]: rookVal,
+    [codes.pieces.white.knight]: knightVal,
+    [codes.pieces.white.bishop]: bishopVal,
     [codes.pieces.white.pawn]: 1,
     [codes.pieces.black.king]: -Infinity,
-    [codes.pieces.black.queen]: -9,
-    [codes.pieces.black.rook]: -5,
-    [codes.pieces.black.knight]: -3.5,
-    [codes.pieces.black.bishop]: -3.5,
+    [codes.pieces.black.queen]: -queenVal,
+    [codes.pieces.black.rook]: -rookVal,
+    [codes.pieces.black.knight]: -knightVal,
+    [codes.pieces.black.bishop]: -bishopVal,
     [codes.pieces.black.pawn]: -1,
   };
 
@@ -51,7 +51,7 @@ export const BoardRater = ([
       if (absValue !== Infinity) {
         if ([27, 28, 35, 36].indexOf(i) !== -1) {
           // Boost four middle squares
-          absValue *= 1.1;
+          absValue *= centerBoost;
         }
 
         const row = Math.floor(i / 8);
@@ -62,11 +62,11 @@ export const BoardRater = ([
           const steps = relRow - 1;
 
           if (steps >= 4) {
-            absValue += 1.5 * (steps - 3);
+            absValue += pawnNearPromotionBoost * (steps - 3);
           }
         }
 
-        absValue += 0.005 * relRow;
+        absValue += pieceAdvancementBoost * relRow;
 
         side.material += absValue;
       } else {

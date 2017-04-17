@@ -1,4 +1,4 @@
-import { codes, toWhite } from './board';
+import { codes, toWhite, isWhite } from './board';
 
 const material = {
   [codes.pieces.white.king]: Infinity,
@@ -43,18 +43,19 @@ export const rateBoard = (board: Uint8Array) => {
         absValue *= 1.1;
       }
 
+      const row = Math.floor(i / 8);
+      const isPieceWhite = isWhite(board[i]);
+      const relRow = (isPieceWhite ? 7 - row : row);
+
       if (toWhite(board[i]) === codes.pieces.white.pawn) {
-        const row = Math.floor(i / 8);
-        const steps = (-1 + (
-          board[i] === codes.pieces.white.pawn ?
-          7 - row :
-          row
-        ));
+        const steps = relRow - 1;
 
         if (steps >= 4) {
           absValue += 1.5 * (steps - 3);
         }
       }
+
+      absValue += 0.005 * relRow;
 
       side.material += absValue;
     } else {

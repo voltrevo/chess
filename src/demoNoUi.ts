@@ -23,16 +23,16 @@ import { rateBoard } from './rateBoard';
 import { rateBoardChallenger } from './rateBoardChallenger';
 import { entries, values } from './util';
 
-const applyDeep = (rate: (board: Uint8Array) => number, extraDepth = 0) => {
+const applyDeep = (rate: (board: Uint8Array) => number) => {
   const rateShallowSync = applyDepth(rate, 1);
   const rateShallowAsync = applyPromise(rateShallowSync);
-  const rateDeep = applyDepthPromise(rateShallowAsync, extraDepth);
+  const rateDeep = applyDepthPromise(rateShallowAsync, 0);
 
   return rateDeep;
 }
 
 const rateBoardDeep = applyDeep(rateBoard);
-const rateBoardChallengerDeep = applyDeep(rateBoardChallenger, 1);
+const rateBoardChallengerDeep = applyDeep(rateBoardChallenger);
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

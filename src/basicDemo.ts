@@ -124,8 +124,19 @@ window.addEventListener('load', () => {
   let board = newGame;
   let cjsPos = toChessboardJsBoardPos(board);
 
+  const isPlayBlack = location.search.indexOf('play-black') !== -1;
+  if (isPlayBlack) {
+    pickMoveByRatingPromise(board, rateBoardDeep, Math.random()).then(whiteMove => {
+      if (whiteMove !== null) {
+        board = applyMove(board, whiteMove);
+        cjsBoard.position(toChessboardJsBoardPos(board), true);
+      }
+    });
+  }
+
   const cjsBoard = chessboardJs(boardContainer, {
     position: cjsPos,
+    orientation: isPlayBlack ? 'black' : 'white',
     draggable: true,
     onDrop: (from: string, to: string) => {
       const fromIdx = pos.fromPgn(from);
@@ -205,16 +216,18 @@ window.addEventListener('load', () => {
 
   const startTime = Date.now();
 
-  headToHead(
-    trial,
-    update => statsDisplay.textContent = JSON.stringify({
-      wins: update.wins,
-      losses: update.losses,
-      score: `${(100 * update.score).toFixed(1)}%`,
-      confidence: `${(100 * update.confidence).toFixed(1)}%`,
-      time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
-    }, null, 2),
-  );
+  if (location.search.indexOf('play') === -1) {
+    headToHead(
+      trial,
+      update => statsDisplay.textContent = JSON.stringify({
+        wins: update.wins,
+        losses: update.losses,
+        score: `${(100 * update.score).toFixed(1)}%`,
+        confidence: `${(100 * update.confidence).toFixed(1)}%`,
+        time: `${Math.floor((Date.now() - startTime) / 60000)}min`,
+      }, null, 2),
+    );
+  }
 
   const updateSize = () => {
     const windowSize = Math.min(window.innerHeight, window.innerWidth);

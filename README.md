@@ -61,7 +61,7 @@ Black to move
 
 # API
 
-## `Chess.Board`
+### `Chess.Board`
 
 The state of the board is represented as a `Uint8Array` with 66 elements, one for each square and a couple of extra bytes containing flags to keep track of things like each player's ability to castle.
 
@@ -69,7 +69,7 @@ Positions on the board are represented by numbers from 0 to 63, starting from th
 
 A starting board can be created with `Chess.Board()`.
 
-### `Chess.Board.toString`
+### `Chess.Board.toString(board)`
 
 Convert `Chess.Board` to a `string`.
 
@@ -88,11 +88,11 @@ r n b q k b n r
 White to move
 ```
 
-### `Chess.Board.fromString`
+### `Chess.Board.fromString(str)`
 
 Convert from strings similar to the example above. Whitespace is not signficant and the player to move is determined only by the first character after the board.
 
-### `Chess.Board.copy`
+### `Chess.Board.copy(board)`
 
 Copy a chess board. This should usually be unnecessary as the api will not mutate boards passed to it (it will return new boards where appropriate).
 

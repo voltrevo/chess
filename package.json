@@ -2,7 +2,7 @@
   "name": "chess",
   "version": "0.0.1",
   "description": "A chess library",
-  "main": "src/index.ts",
+  "main": "src/Chess.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -13,13 +13,13 @@ import {
 
 import { entries, values } from './util';
 
-const rateBoard = BoardRater(championParams);
-
 export default function findAIMove(
   board: Chess.Board,
   depth: number = 2,
   rand: number = 0,
 ): Promise<[number, number] | null> {
+  const rateBoard = BoardRater(championParams);
+
   if (depth === 0) {
     return pickMoveByRatingPromise(board, applyPromise(rateBoard), rand);
   }

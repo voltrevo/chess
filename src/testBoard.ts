@@ -1,14 +1,7 @@
 import * as assert from 'assert';
 import * as test from 'tape';
 
-import {
-  newGame,
-  fromString,
-  toString,
-  findMoves,
-  applyMove,
-  codes,
-} from './board';
+import Board from './Board';
 
 import { pos } from './pgn';
 
@@ -22,7 +15,7 @@ const checkedApplyMove = (
   }
 
   const isMoveLegal = Array
-    .from(findMoves(board, pos.fromPgn(from)))
+    .from(Board.findMoves(board, pos.fromPgn(from)))
     .some(legalTo => pos.toPgn(legalTo) === to)
   ;
 
@@ -30,7 +23,11 @@ const checkedApplyMove = (
     return null;
   }
 
-  return applyMove(board, [pos.fromPgn(from), pos.fromPgn(to)], promotionPreference);
+  return Board.applyMove(
+    board,
+    [pos.fromPgn(from), pos.fromPgn(to)],
+    promotionPreference
+  );
 }
 
 const blockTrim = (str: string) => {
@@ -101,17 +98,17 @@ test('can convert games to and from strings', (t) => {
   t.plan(sampleBoardStrings.length);
 
   for (const boardStr of sampleBoardStrings) {
-    t.equal(toString(fromString(boardStr)), boardStr);
+    t.equal(Board.toString(Board.fromString(boardStr)), boardStr);
   }
 });
 
 test('starting moves of e2 pawn', (t) => {
   t.plan(2);
 
-  t.equal(toString(newGame), sampleBoardStrings[0]);
+  t.equal(Board.toString(Board()), sampleBoardStrings[-1]);
 
   const moveList = Array
-    .from(findMoves(newGame, pos.fromPgn('e2')))
+    .from(Board.findMoves(Board(), pos.fromPgn('e2')))
     .map(pos.toPgn)
     .join(',')
   ;
@@ -122,7 +119,7 @@ test('starting moves of e2 pawn', (t) => {
 test('moves of d4 queen', (t) => {
   t.plan(1);
 
-  const board = fromString(`
+  const board = Board.fromString(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -147,7 +144,7 @@ test('moves of d4 queen', (t) => {
   //     a b c d e f g h
 
   const moveList = Array
-    .from(findMoves(board, pos.fromPgn('d4')))
+    .from(Board.findMoves(board, pos.fromPgn('d4')))
     .map(pos.toPgn)
     .sort()
     .join(',')
@@ -159,7 +156,7 @@ test('moves of d4 queen', (t) => {
 test('pawn can capture', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -174,7 +171,7 @@ test('pawn can capture', (t) => {
 
   board = checkedApplyMove(board, ['e4', 'd5']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -191,7 +188,7 @@ test('pawn can capture', (t) => {
 test('en passant', (t) => {
   t.plan(2);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -206,7 +203,7 @@ test('en passant', (t) => {
 
   board = checkedApplyMove(board, ['e2', 'e4']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -221,7 +218,7 @@ test('en passant', (t) => {
 
   board = checkedApplyMove(board, ['d4', 'e3']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -238,7 +235,7 @@ test('en passant', (t) => {
 test('black queen side castle', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R . . . K B N R
     P P P P P P P P
     . . . . . . . .
@@ -253,7 +250,7 @@ test('black queen side castle', (t) => {
 
   board = checkedApplyMove(board, ['e8', 'c8']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     . . K R . B N R
     P P P P P P P P
     . . . . . . . .
@@ -270,7 +267,7 @@ test('black queen side castle', (t) => {
 test('black king side castle', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K . . R
     P P P P P P P P
     . . . . . . . .
@@ -285,7 +282,7 @@ test('black king side castle', (t) => {
 
   board = checkedApplyMove(board, ['e8', 'g8']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     R N B Q . R K .
     P P P P P P P P
     . . . . . . . .
@@ -302,7 +299,7 @@ test('black king side castle', (t) => {
 test('knight can capture', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -317,7 +314,7 @@ test('knight can capture', (t) => {
 
   board = checkedApplyMove(board, ['f5', 'g7']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     R N B Q K B N R
     P P P P P P n P
     . . . . . . . .
@@ -334,7 +331,7 @@ test('knight can capture', (t) => {
 test('rooks can\'t jump over pieces', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K B N R
     P P P P P P P P
     . . . . . . . .
@@ -349,13 +346,13 @@ test('rooks can\'t jump over pieces', (t) => {
 
   board = checkedApplyMove(board, ['h1', 'h3']);
 
-  t.equal(board && toString(board), null);
+  t.equal(board && Board.toString(board), null);
 });
 
 test('king can move out of check', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K B N R
     P P P P P P P P
     . . . . Q . . .
@@ -370,7 +367,7 @@ test('king can move out of check', (t) => {
 
   board = checkedApplyMove(board, ['e1', 'd1']);
 
-  t.equal(board && toString(board), blockTrim(`
+  t.equal(board && Board.toString(board), blockTrim(`
     R N B Q K B N R
     P P P P P P P P
     . . . . Q . . .
@@ -387,7 +384,7 @@ test('king can move out of check', (t) => {
 test('can\'t castle over check', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N . Q K B N R
     P P P . . P P P
     . . . . . . . .
@@ -402,13 +399,13 @@ test('can\'t castle over check', (t) => {
 
   board = checkedApplyMove(board, ['e1', 'g1']);
 
-  t.equal(board && toString(board), null);
+  t.equal(board && Board.toString(board), null);
 });
 
 test('pawns can\'t jump over pieces on first move', (t) => {
   t.plan(1);
 
-  let board: Uint8Array | null = fromString(`
+  let board: Uint8Array | null = Board.fromString(`
     R N B Q K B N R
     P P P P P P n P
     . . . . . . . .
@@ -423,5 +420,5 @@ test('pawns can\'t jump over pieces on first move', (t) => {
 
   board = checkedApplyMove(board, ['e2', 'e4']);
 
-  t.equal(board && toString(board), null);
+  t.equal(board && Board.toString(board), null);
 });

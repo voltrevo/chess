@@ -1,14 +1,14 @@
-import { applyMove, codes, newGame } from './board';
+import Board from './Board';
 import { determineEndState, pickMoveByRatingPromise } from './pickMoveByRating';
 
 type RaterT = (board: Uint8Array) => Promise<number>;
 
 export const runChessGame: (rate: RaterT, rateChallenger: RaterT) => Promise<boolean> = (rate, rateChallenger) => {
-  let board = newGame;
+  let board = Board();
   let moves = 0;
 
   // TODO: Better side alternation (should be A-B-B-A-A-B-B-...)
-  const challengerSide = (Math.random() < 0.5 ? codes.sides.white : codes.sides.black);
+  const challengerSide = (Math.random() < 0.5 ? Board.codes.sides.white : Board.codes.sides.black);
   const getRater = () => {
     return (board[64] === challengerSide ? rateChallenger : rate);
   };
@@ -18,7 +18,7 @@ export const runChessGame: (rate: RaterT, rateChallenger: RaterT) => Promise<boo
 
     return pickMoveByRatingPromise(board, getRater(), Math.random()).then((move) => {
       if (move !== null) {
-        board = applyMove(board, move);
+        board = Board.applyMove(board, move);
         return { gameOver: false };
       }
 

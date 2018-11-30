@@ -1,15 +1,7 @@
 (window as any).$ = require('jquery');
 const chessboardJs = require('chessboardjs');
 
-import {
-  findMoves,
-  findPieces,
-  toString,
-  applyMove,
-  newGame,
-  isWhite,
-  codes,
-} from './board';
+import Board from './Board';
 
 import { BoardRater, BoardRaterParams } from './BoardRater';
 import { championParams } from './championParams';
@@ -57,7 +49,7 @@ const createElement = (tag: string, styles: { [key: string]: string } = {}) => {
 };
 
 const toChessboardJsBoardPos = (board: Uint8Array) => {
-  const flatStr = toString(board).replace(/[\n ]/g, '');
+  const flatStr = Board.toString(board).replace(/[\n ]/g, '');
 
   const pieceMap: { [key: string]: string | undefined } = {
     k: 'wK',
@@ -88,13 +80,13 @@ const toChessboardJsBoardPos = (board: Uint8Array) => {
 };
 
 const pickRandomMove = (board: Uint8Array) => {
-  const pieceCodes = (board[64] === codes.sides.white ? codes.pieces.white : codes.pieces.black);
-  const piecePositions = findPieces(board, Uint8Array.from(values(pieceCodes)));
+  const pieceCodes = (board[64] === Board.codes.sides.white ? Board.codes.pieces.white : Board.codes.pieces.black);
+  const piecePositions = Board.findPieces(board, Uint8Array.from(values(pieceCodes)));
 
   const moves: [number, number][] = [];
 
   for (const from of piecePositions) {
-    for (const to of findMoves(board, from)) {
+    for (const to of Board.findMoves(board, from)) {
       moves.push([from, to]);
     }
   }
@@ -121,14 +113,14 @@ window.addEventListener('load', () => {
   document.body.appendChild(boardContainer);
   document.body.appendChild(statsDisplay);
 
-  let board = newGame;
+  let board = Board();
   let cjsPos = toChessboardJsBoardPos(board);
 
   const isPlayBlack = location.search.indexOf('play-black') !== -1;
   if (isPlayBlack) {
     pickMoveByRatingPromise(board, rateBoardDeep, Math.random()).then(whiteMove => {
       if (whiteMove !== null) {
-        board = applyMove(board, whiteMove);
+        board = Board.applyMove(board, whiteMove);
         cjsBoard.position(toChessboardJsBoardPos(board), true);
       }
     });
@@ -142,22 +134,22 @@ window.addEventListener('load', () => {
       const fromIdx = pos.fromPgn(from);
       const toIdx = pos.fromPgn(to);
 
-      const isWhiteTurn = (board[64] === codes.sides.white);
-      const isWhitePiece = isWhite(board[fromIdx]);
+      const isWhiteTurn = (board[64] === Board.codes.sides.white);
+      const isWhitePiece = Board.isWhite(board[fromIdx]);
 
       if (isWhiteTurn !== isWhitePiece) {
         return 'snapback';
       }
 
-      for (const legalToIdx of findMoves(board, fromIdx)) {
+      for (const legalToIdx of Board.findMoves(board, fromIdx)) {
         if (toIdx === legalToIdx) {
-          board = applyMove(board, [fromIdx, toIdx]);
+          board = Board.applyMove(board, [fromIdx, toIdx]);
           setTimeout(() => {
             cjsBoard.position(toChessboardJsBoardPos(board), false);
 
             pickMoveByRatingPromise(board, rateBoardDeep, Math.random()).then(blackMove => {
               if (blackMove !== null) {
-                board = applyMove(board, blackMove);
+                board = Board.applyMove(board, blackMove);
                 cjsBoard.position(toChessboardJsBoardPos(board), true);
               }
             });
@@ -171,19 +163,19 @@ window.addEventListener('load', () => {
   });
 
   const trial: () => Promise<boolean> = () => {
-    board = newGame;
+    board = Board();
     cjsBoard.position(toChessboardJsBoardPos(board), false);
     let moves = 0;
 
     // TODO: Better side alternation (should be A-B-B-A-A-B-B-...)
-    const challengerSide = (Math.random() < 0.5 ? codes.sides.white : codes.sides.black);
+    const challengerSide = (Math.random() < 0.5 ? Board.codes.sides.white : Board.codes.sides.black);
     const getRater = () => {
       return (board[64] === challengerSide ? rateBoardChallengerDeep : rateBoardDeep);
     };
 
     const computerMove = () => pickMoveByRatingPromise(board, getRater(), Math.random()).then(move => {
       if (move !== null) {
-        board = applyMove(board, move);
+        board = Board.applyMove(board, move);
         cjsBoard.position(toChessboardJsBoardPos(board), true);
         return { gameOver: false };
       }

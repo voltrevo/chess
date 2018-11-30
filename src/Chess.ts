@@ -1,25 +1,73 @@
 import * as assert from 'assert';
 
 import { emptyIter, values } from './util';
+import findAIMoveImport from './findAIMove';
 
-type Board = Uint8Array;
+namespace Chess {
+  export type Board = Uint8Array;
 
-function Board(): Board {
-  return Board.fromString(`
-    R N B Q K B N R
-    P P P P P P P P
-    . . . . . . . .
-    . . . . . . . .
-    . . . . . . . .
-    . . . . . . . .
-    p p p p p p p p
-    r n b q k b n r
+  export function Board(): Board {
+    return Board.fromString(`
+      R N B Q K B N R
+      P P P P P P P P
+      . . . . . . . .
+      . . . . . . . .
+      . . . . . . . .
+      . . . . . . . .
+      p p p p p p p p
+      r n b q k b n r
 
-    White to move
-  `);
-}
+      White to move
+    `);
+  }
 
-namespace Board {
+  export namespace Board {
+    export function toString(board: Board): string {
+      let result = '';
+
+      for (let i = 0; i !== 8; i++) {
+        for (let j = 0; j !== 8; j++) {
+          if (j !== 0) {
+            result += ' ';
+          }
+
+          result += String.fromCharCode(board[8 * i + j]);
+        }
+
+        result += '\n';
+      }
+
+      result += `\n${String.fromCharCode(board[64]) === 'W' ? 'White' : 'Black'} to move`;
+
+      return result;
+    }
+
+    export function fromString(str: string): Board {
+      const flatStr = str.replace(/[\n ]/g, '');
+      const board = new Uint8Array(66);
+
+      for (let i = 0; i !== 65; i++) {
+        board[i] = flatStr.charCodeAt(i);
+      }
+
+      // Castling flags:
+      // |      1      |      2      |      4      |      8      |
+      // | white-col-7 | white-col-7 | black-col-7 | black-col-7 |
+
+      // En passant flags:
+      // |     16      |     32      |     64      |    128      |
+      // | exists flag |     3 bit unsigned int for column       |
+
+      board[65] = 1 | 2 | 4 | 8;
+
+      return board;
+    }
+
+    export function copy(board: Board): Board {
+      return Uint8Array.from(board);
+    }
+  }
+
   export const codes = {
     pieces: {
       white: {
@@ -46,27 +94,6 @@ namespace Board {
     emptySquare: '.'.charCodeAt(0),
   };
 
-  export function fromString(str: string): Uint8Array {
-    const flatStr = str.replace(/[\n ]/g, '');
-    const board = new Uint8Array(66);
-
-    for (let i = 0; i !== 65; i++) {
-      board[i] = flatStr.charCodeAt(i);
-    }
-
-    // Castling flags:
-    // |      1      |      2      |      4      |      8      |
-    // | white-col-7 | white-col-7 | black-col-7 | black-col-7 |
-
-    // En passant flags:
-    // |     16      |     32      |     64      |    128      |
-    // | exists flag |     3 bit unsigned int for column       |
-
-    board[65] = 1 | 2 | 4 | 8;
-
-    return board;
-  }
-
   const masks = {
     castle: {
       white: {
@@ -84,7 +111,7 @@ namespace Board {
     enPassantAll: 0b11110000,
   };
 
-  function enPassantCol(board: Uint8Array) {
+  function enPassantCol(board: Board) {
     const flags = board[65];
 
     if (!(flags & masks.enPassant)) {
@@ -103,7 +130,7 @@ namespace Board {
     return flags;
   }
 
-  function enPassantPos(board: Uint8Array) {
+  function enPassantPos(board: Board) {
     const col = enPassantCol(board);
 
     if (col === null) {
@@ -119,30 +146,13 @@ namespace Board {
     return 8 * row + col;
   }
 
-  export function toString(board: Uint8Array) {
-    let result = '';
-
-    for (let i = 0; i !== 8; i++) {
-      for (let j = 0; j !== 8; j++) {
-        if (j !== 0) {
-          result += ' ';
-        }
-
-        result += String.fromCharCode(board[8 * i + j]);
-      }
-
-      result += '\n';
-    }
-
-    result += `\n${String.fromCharCode(board[64]) === 'W' ? 'White' : 'Black'} to move`;
-
-    return result;
-  }
-
   /**
    * E.g. findPieces(board, values(codes.pieces.white)) to get white's pieces
    */
-  export function* findPieces(board: Uint8Array, pieceCodes: Uint8Array) {
+  export function* findPieces(
+    board: Board,
+    pieceCodes: Uint8Array
+  ): IterableIterator<number> {
     for (let i = 0; i !== 64; i++) {
       if (pieceCodes.indexOf(board[i]) !== -1) {
         yield i;
@@ -150,9 +160,10 @@ namespace Board {
     }
   };
 
-  export const { findMoves, isKingInCheck, isWhite, toWhite, row } = (() => {
+  const row = (pos: number) => Math.floor(pos / 8);
+
+  export const { findMoves, isKingInCheck, isWhite, toWhite } = (() => {
     const isOnBoard = (pos: number) => 0 <= pos && pos < 64;
-    const row = (pos: number) => Math.floor(pos / 8);
 
     const isMoveOnBoard = (pos: number, [di, dj]: [number, number]) => {
       const newVertPos = pos + 8 * di;
@@ -163,18 +174,18 @@ namespace Board {
       );
     };
 
-    function isWhite(code: number) {
+    function isWhite(code: number): boolean {
       return code >= 'a'.charCodeAt(0);
     }
 
     const diff = 'a'.charCodeAt(0) - 'A'.charCodeAt(0);
 
-    function toWhite(code: number) {
+    function toWhite(code: number): number {
       return !isWhite(code) ? code + diff : code;
     }
 
     function* travelMoves(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       [di, dj]: [number, number],
       isPlayerWhite: boolean,
@@ -207,7 +218,7 @@ namespace Board {
     }
 
     function* rookMoves(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       isPlayerWhite: boolean
     ) {
@@ -226,7 +237,7 @@ namespace Board {
     }
 
     const bishopMoves = function*(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       isPlayerWhite: boolean
     ) {
@@ -245,7 +256,7 @@ namespace Board {
     }
 
     function* queenMoves(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       isPlayerWhite: boolean
     ) {
@@ -267,7 +278,7 @@ namespace Board {
         }
       }
 
-      return function*(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
+      return function*(board: Board, pos: number, isPlayerWhite: boolean) {
         for (const [di, dj] of moveSet) {
           if (!isMoveOnBoard(pos, [di, dj])) {
             continue;
@@ -287,7 +298,7 @@ namespace Board {
     })();
 
     function* pawnMoves(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       isPlayerWhite: boolean
     ) {
@@ -342,7 +353,7 @@ namespace Board {
     }
 
     function* plainKingMoves(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       isPlayerWhite: boolean
     ) {
@@ -370,10 +381,10 @@ namespace Board {
     }
 
     function isKingInCheck(
-      board: Uint8Array,
+      board: Board,
       pos: number,
       isPlayerWhite: boolean
-    ) {
+    ): boolean {
       const opponentPieces = (
         isPlayerWhite ?
         codes.pieces.black :
@@ -423,7 +434,7 @@ namespace Board {
       return false;
     }
 
-    function* kingMoves(board: Uint8Array, pos: number, isPlayerWhite: boolean) {
+    function* kingMoves(board: Board, pos: number, isPlayerWhite: boolean) {
       for (const move of plainKingMoves(board, pos, isPlayerWhite)) {
         yield move;
       }
@@ -464,7 +475,7 @@ namespace Board {
       }
     }
 
-    function* findMoves(board: Uint8Array, pos: number) {
+    function* findMoves(board: Board, pos: number): IterableIterator<number> {
       const pieceCode = board[pos];
 
       if (pieceCode === '.'.charCodeAt(0)) {
@@ -511,7 +522,7 @@ namespace Board {
   })();
 
   export function applyMove(
-    board: Uint8Array,
+    board: Board,
     [from, to]: [number, number],
     promotionPreference = () => (
       isWhite(board[from]) ?
@@ -519,7 +530,7 @@ namespace Board {
       codes.pieces.black.queen
     )
   ) {
-    const newBoard = Uint8Array.from(board);
+    const newBoard = Board.copy(board);
     let flags = board[65];
 
     // Update who's turn it is
@@ -604,6 +615,8 @@ namespace Board {
 
     return newBoard;
   }
+
+  export const findAIMove = findAIMoveImport;
 }
 
-export default Board;
+export default Chess;

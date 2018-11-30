@@ -1,4 +1,4 @@
-import Board from './Board';
+import Chess from './Chess';
 
 export type BoardRaterParams = [number, number, number, number, number, number, number];
 
@@ -12,18 +12,18 @@ export const BoardRater = ([
   pawnNearPromotionBoost,
 ]: BoardRaterParams) => {
   const material = {
-    [Board.codes.pieces.white.king]: Infinity,
-    [Board.codes.pieces.white.queen]: queenVal,
-    [Board.codes.pieces.white.rook]: rookVal,
-    [Board.codes.pieces.white.knight]: knightVal,
-    [Board.codes.pieces.white.bishop]: bishopVal,
-    [Board.codes.pieces.white.pawn]: 1,
-    [Board.codes.pieces.black.king]: -Infinity,
-    [Board.codes.pieces.black.queen]: -queenVal,
-    [Board.codes.pieces.black.rook]: -rookVal,
-    [Board.codes.pieces.black.knight]: -knightVal,
-    [Board.codes.pieces.black.bishop]: -bishopVal,
-    [Board.codes.pieces.black.pawn]: -1,
+    [Chess.codes.pieces.white.king]: Infinity,
+    [Chess.codes.pieces.white.queen]: queenVal,
+    [Chess.codes.pieces.white.rook]: rookVal,
+    [Chess.codes.pieces.white.knight]: knightVal,
+    [Chess.codes.pieces.white.bishop]: bishopVal,
+    [Chess.codes.pieces.white.pawn]: 1,
+    [Chess.codes.pieces.black.king]: -Infinity,
+    [Chess.codes.pieces.black.queen]: -queenVal,
+    [Chess.codes.pieces.black.rook]: -rookVal,
+    [Chess.codes.pieces.black.knight]: -knightVal,
+    [Chess.codes.pieces.black.bishop]: -bishopVal,
+    [Chess.codes.pieces.black.pawn]: -1,
   };
 
   return (board: Uint8Array) => {
@@ -55,10 +55,10 @@ export const BoardRater = ([
         }
 
         const row = Math.floor(i / 8);
-        const isPieceWhite = Board.isWhite(board[i]);
+        const isPieceWhite = Chess.isWhite(board[i]);
         const relRow = (isPieceWhite ? 7 - row : row);
 
-        if (Board.toWhite(board[i]) === Board.codes.pieces.white.pawn) {
+        if (Chess.toWhite(board[i]) === Chess.codes.pieces.white.pawn) {
           const steps = relRow - 1;
 
           if (steps >= 4) {

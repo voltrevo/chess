@@ -1,19 +1,19 @@
-import Board from './Board';
+import Chess from './Chess';
 import { values } from './util';
 
 export const determineEndState = (board: Uint8Array) => {
-  const isPlayerWhite = (board[64] === Board.codes.sides.white);
+  const isPlayerWhite = (board[64] === Chess.codes.sides.white);
 
-  const kingPosArray = Array.from(Board.findPieces(
+  const kingPosArray = Array.from(Chess.findPieces(
     board,
     Uint8Array.from(
       isPlayerWhite ?
-      [Board.codes.pieces.white.king] :
-      [Board.codes.pieces.black.king]
+      [Chess.codes.pieces.white.king] :
+      [Chess.codes.pieces.black.king]
     )
   ));
 
-  if (kingPosArray.length === 0 || Board.isKingInCheck(board, kingPosArray[0], isPlayerWhite)) {
+  if (kingPosArray.length === 0 || Chess.isKingInCheck(board, kingPosArray[0], isPlayerWhite)) {
     return 'checkmate';
   }
 
@@ -21,10 +21,10 @@ export const determineEndState = (board: Uint8Array) => {
 };
 
 const findAllMoves: (board: Uint8Array) => IterableIterator<[number, number]> = function*(board: Uint8Array) {
-  const pieceCodes = values(board[64] === Board.codes.sides.white ? Board.codes.pieces.white : Board.codes.pieces.black);
+  const pieceCodes = values(board[64] === Chess.codes.sides.white ? Chess.codes.pieces.white : Chess.codes.pieces.black);
 
-  for (const piecePos of Board.findPieces(board, Uint8Array.from(pieceCodes))) {
-    for (const dest of Board.findMoves(board, piecePos)) {
+  for (const piecePos of Chess.findPieces(board, Uint8Array.from(pieceCodes))) {
+    for (const dest of Chess.findMoves(board, piecePos)) {
       yield [piecePos, dest];
     }
   }
@@ -34,12 +34,12 @@ const findBestMoveAndRating = (board: Uint8Array, rate: (board: Uint8Array) => n
   let bestMove: [number, number] | null = null;
   let bestRating = -Infinity;
 
-  const isPlayerWhite = (board[64] === Board.codes.sides.white);
+  const isPlayerWhite = (board[64] === Chess.codes.sides.white);
 
   const ratingMultiplier = isPlayerWhite ? 1 : -1;
 
   for (const move of findAllMoves(board)) {
-    const rating = ratingMultiplier * rate(Board.applyMove(board, move));
+    const rating = ratingMultiplier * rate(Chess.applyMove(board, move));
 
     if (rating > bestRating) {
       bestMove = move;
@@ -88,7 +88,7 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
   let bestMove: [number, number] | null = null;
   let bestRating = -Infinity;
 
-  const ratingMultiplier = (board[64] === Board.codes.sides.white) ? 1 : -1;
+  const ratingMultiplier = (board[64] === Chess.codes.sides.white) ? 1 : -1;
 
   const moves = Array.from(findAllMoves(board));
 
@@ -96,7 +96,7 @@ const findBestMoveAndRatingPromise = (board: Uint8Array, rate: (board: Uint8Arra
 
   const moveAndRatingsPromise = Promise
     .all(
-      moves.map(move => rate(Board.applyMove(board, move))
+      moves.map(move => rate(Chess.applyMove(board, move))
         .then(rating => [move, ratingMultiplier * rating] as MoveAndRating)
       )
     )

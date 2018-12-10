@@ -1,0 +1,16 @@
+{
+  "name": "chess",
+  "version": "0.0.1",
+  "description": "A chess library",
+  "main": "build/js/Chess.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "chess"
+  ],
+  "author": "Andrew Morris",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -8,7 +8,7 @@ Demo available at https://andrewmorris.io/chess
 
 Install:
 ```sh
-npm install voltrevo/chess
+npm install voltrevo/chess#dist
 ```
 
 Example:
